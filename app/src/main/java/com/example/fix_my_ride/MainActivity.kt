@@ -15,28 +15,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.example.fix_my_ride.ui.theme.FixMYrideTheme
+import com.example.fix_my_ride.Navigation.SystemNavigation
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            ShowCardSample()
+            SystemNavigation()
 
             }
         }
     }
 
-@Preview(showSystemUi = true, showBackground = true)
-@Composable
-fun ShowCardSample() {
-    Card(
-        elevation = 5.dp,
-        modifier = Modifier
-            .padding(5.dp)
-            .wrapContentHeight()
-    ) {
-        Text(text = "Text inside Card", Modifier.padding(15.dp))
-    }
-}

@@ -44,6 +44,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.fix_my_ride.R
 import com.example.fix_my_ride.Features.Authentication.Domain.model.AuthResult
+import com.example.fix_my_ride.Features.Authentication.Presentation.ViewModel.AuthViewModel
 import com.example.fix_my_ride.ui.Components.AppButton
 import com.example.fix_my_ride.ui.Components.AppTextField
 import com.example.fix_my_ride.ui.Components.ErrorBanner
