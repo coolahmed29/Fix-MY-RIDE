@@ -1,5 +1,4 @@
-<resources>
-    <!-- res/values/strings.xml -->
+ <!-- res/values/strings.xml -->
     <resources>
         <string name="app_name">Fix My Ride</string>
 
@@ -8,7 +7,6 @@
         <string name="register_subtitle">Apni details neeche bharein</string>
         <string name="login_title">Wapas Aao!</string>
         <string name="login_subtitle">Apne account mein login karein</string>
-
         <!-- ── Fields ────────────────────────────────── -->
         <string name="label_name">Naam</string>
         <string name="label_phone">Phone Number</string>
@@ -44,4 +42,3 @@
     </resources>
 
 
-</resources>
