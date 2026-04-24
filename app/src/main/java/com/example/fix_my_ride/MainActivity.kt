@@ -16,7 +16,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.fix_my_ride.Navigation.SystemNavigation
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint  // ← ye add karo
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

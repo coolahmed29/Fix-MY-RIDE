@@ -6,10 +6,11 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
-import com.example.fix_my_ride.features.auth.data.source.FirebaseAuthSource
-import com.example.fix_my_ride.features.auth.domain.model.AuthResult
-import com.example.fix_my_ride.features.auth.domain.model.UserModel
-import com.example.fix_my_ride.features.auth.domain.repository.AuthRepository
+import com.example.fix_my_ride.Features.Authentication.Domain.repository.AuthRepository
+import com.example.fix_my_ride.Features.Authentication.data.Source.FirebaseAuthSource
+import com.example.fix_my_ride.Features.Authentication.Domain.model.AuthResult
+import com.example.fix_my_ride.Features.Authentication.Domain.model.UserModel
+
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject

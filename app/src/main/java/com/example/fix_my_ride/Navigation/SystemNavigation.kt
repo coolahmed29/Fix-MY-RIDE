@@ -37,7 +37,11 @@ fun SystemNavigation() {
                 },
                 onNavigateToRegister = {
                     navController.navigate(RegistrationScreen)
+                },
+                onBack = {
+                    navController.popBackStack()
                 }
+
             )
         }
 
