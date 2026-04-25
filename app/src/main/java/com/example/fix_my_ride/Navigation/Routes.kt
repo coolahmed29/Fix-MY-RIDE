@@ -11,3 +11,6 @@ data object RegistrationScreen
 
 @Serializable
 data object  UserDashboard
+
+@Serializable data object SparePartsScreen
+@Serializable data object PartDetailScreen

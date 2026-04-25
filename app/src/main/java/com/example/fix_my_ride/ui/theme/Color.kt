@@ -36,9 +36,9 @@ val DarkTextSecondary = Color(0xFFD1D5DB)
 
 
 
-val GradientStart  = Color(0xFF9BB5D3)
-val GradientMid    = Color(0xFFB8C6DB)
-val GradientEnd    = Color(0xFFE6DADA)
+val GradientStart  = Color(0xFF0F2027)
+val GradientMid    = Color(0xFF2C5364)
+val GradientEnd    = Color(0xFF4FACFE)
 
 // Dashboard Background
 val DashBackground = Color(0xFFF5F7FA)

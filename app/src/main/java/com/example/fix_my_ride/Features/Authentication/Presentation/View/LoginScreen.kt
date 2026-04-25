@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -71,7 +72,6 @@ import com.example.fix_my_ride.ui.theme.PrimaryDark
 import com.example.fix_my_ride.ui.theme.Roboto
 import com.example.fix_my_ride.ui.theme.TextPrimary
 import com.example.fix_my_ride.ui.theme.TextSecondary
-
 @Composable
 fun LoginScreen(
     onLoginSuccess       :  () -> Unit,
@@ -293,6 +293,8 @@ fun LoginScreen(
             }
 
             Spacer(modifier = Modifier.height(32.dp))
+
+
         }
     }
 }

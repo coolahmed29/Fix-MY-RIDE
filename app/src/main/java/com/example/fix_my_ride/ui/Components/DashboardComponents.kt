@@ -1,8 +1,11 @@
 package com.example.fix_my_ride.ui.Components
 
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,6 +13,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
@@ -17,8 +24,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.fix_my_ride.ui.theme.*
@@ -50,11 +59,22 @@ fun HeroSection(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(220.dp)
-            .background(
-                Brush.linearGradient(listOf(GradientStart, GradientMid, GradientEnd))
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .shadow(
+                elevation = 16.dp,
+                shape = RoundedCornerShape(28.dp),
+                clip = false
             )
+            .clip(RoundedCornerShape(28.dp))
+            .background(
+                Brush.linearGradient(
+                    listOf(GradientStart, GradientMid, GradientEnd)
+                )
+            )
+            .height(220.dp)
     ) {
+
+        // 🔵 Glow effect (top left)
         Box(
             modifier = Modifier
                 .size(180.dp)
@@ -62,60 +82,70 @@ fun HeroSection(
                 .background(Color.White.copy(alpha = 0.15f), CircleShape)
                 .blur(40.dp)
         )
+
+        // 🔵 Glow effect (bottom right)
         Box(
             modifier = Modifier
                 .size(150.dp)
                 .align(Alignment.BottomEnd)
+                .offset(x = 20.dp, y = 20.dp)
                 .background(Color.White.copy(alpha = 0.10f), CircleShape)
                 .blur(30.dp)
         )
 
         Column(
-            modifier            = Modifier.fillMaxSize().padding(20.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(20.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
+
+            // 🔝 Top Row
             Row(
-                modifier              = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment     = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text       = "Fix My Ride",
+                    text = "Fix My Ride",
                     fontFamily = Montserrat,
                     fontWeight = FontWeight.Bold,
-                    fontSize   = 20.sp,
-                    color      = Color.White
+                    fontSize = 20.sp,
+                    color = Color.White
                 )
+
                 Row(
-                    verticalAlignment     = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     CircleIconButton(Icons.Default.Notifications, "Notifications", onNotifClick)
                     AvatarButton(onAvatarClick)
                 }
             }
 
+            // 🔽 Bottom Text
             Column {
                 Text(
-                    text       = greeting,
+                    text = greeting,
                     fontFamily = Roboto,
-                    fontSize   = 14.sp,
-                    color      = Color.White.copy(alpha = 0.85f)
+                    fontSize = 14.sp,
+                    color = Color.White.copy(alpha = 0.85f)
                 )
-                Spacer(Modifier.height(4.dp))
+
+                Spacer(modifier = Modifier.height(6.dp))
+
                 Text(
-                    text       = subtitle,
+                    text = subtitle,
                     fontFamily = Montserrat,
                     fontWeight = FontWeight.Bold,
-                    fontSize   = 24.sp,
-                    color      = Color.White,
+                    fontSize = 24.sp,
+                    color = Color.White,
                     lineHeight = 32.sp
                 )
             }
         }
     }
 }
-
 @Composable
 private fun CircleIconButton(icon: ImageVector, description: String, onClick: () -> Unit) {
     Box(
@@ -166,91 +196,201 @@ fun FeatureCardsGrid(cards: List<FeatureCard>, modifier: Modifier = Modifier) {
 
 @Composable
 fun FeatureCardItem(card: FeatureCard, modifier: Modifier = Modifier) {
+
+    var pressed by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(if (pressed) 0.96f else 1f, label = "")
+
     Card(
-        modifier  = modifier
-            .height(120.dp)
-            .shadow(4.dp, RoundedCornerShape(20.dp), ambientColor = Color.Black.copy(alpha = 0.05f))
-            .clickable { card.onClick() },
-        shape     = RoundedCornerShape(20.dp),
-        colors    = CardDefaults.cardColors(containerColor = DashCardBg),
+        modifier = modifier
+            .height(135.dp)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
+            .shadow(
+                elevation = 14.dp,
+                shape = RoundedCornerShape(26.dp),
+                ambientColor = Color.Black.copy(alpha = 0.10f)
+            )
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) {
+                pressed = true
+                card.onClick()
+                pressed = false
+            },
+        shape = RoundedCornerShape(26.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = DashCardBg.copy(alpha = 0.95f) // glass feel
+        ),
+        border = BorderStroke(0.6.dp, Color.White.copy(alpha = 0.4f)),
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Column(
-            modifier            = Modifier.fillMaxSize().padding(16.dp),
-            verticalArrangement = Arrangement.SpaceBetween
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(vertical = 18.dp, horizontal = 12.dp),
+            verticalArrangement = Arrangement.SpaceBetween,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
+
+            // 🔵 Gradient Icon Box
             Box(
-                modifier         = Modifier
-                    .size(44.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(card.iconBg),
+                modifier = Modifier
+                    .size(60.dp)
+                    .clip(RoundedCornerShape(18.dp))
+                    .background(
+                        Brush.linearGradient(
+                            listOf(
+                                card.iconBg,
+                                card.iconBg.copy(alpha = 0.7f)
+                            )
+                        )
+                    ),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(card.icon, card.title, tint = card.iconColor, modifier = Modifier.size(24.dp))
+                Icon(
+                    card.icon,
+                    contentDescription = card.title,
+                    tint = card.iconColor,
+                    modifier = Modifier.size(32.dp)
+                )
             }
-            Text(card.title, fontFamily = Montserrat, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = DashTextPrimary)
+
+            Text(
+                text = card.title,
+                fontFamily = Montserrat,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 13.sp,
+                color = DashTextPrimary,
+                textAlign = TextAlign.Center
+            )
         }
     }
 }
-
 // ── Active Request Card ───────────────────────────────
 
 @Composable
 fun ActiveRequestCard(
-    serviceName: String   = "Roadside Assistance",
-    serviceDesc: String   = "Mechanic on the way",
-    location   : String   = "Gulberg III, Lahore",
-    eta        : String   = "ETA: 15 min",
-    modifier   : Modifier = Modifier
+    serviceName: String = "Roadside Assistance",
+    serviceDesc: String = "Mechanic on the way",
+    location: String = "Gulberg III, Lahore",
+    eta: String = "ETA: 15 min",
+    modifier: Modifier = Modifier
 ) {
+
+    var pressed by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(if (pressed) 0.97f else 1f, label = "")
+
     Card(
-        modifier  = modifier
+        modifier = modifier
             .fillMaxWidth()
-            .shadow(4.dp, RoundedCornerShape(20.dp), ambientColor = Color.Black.copy(alpha = 0.05f)),
-        shape     = RoundedCornerShape(20.dp),
-        colors    = CardDefaults.cardColors(containerColor = DashCardBg),
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
+            .shadow(
+                elevation = 14.dp,
+                shape = RoundedCornerShape(26.dp),
+                ambientColor = Color.Black.copy(alpha = 0.10f)
+            )
+            .clickable {
+                pressed = true
+                pressed = false
+            },
+        shape = RoundedCornerShape(26.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = DashCardBg.copy(alpha = 0.95f)
+        ),
+        border = BorderStroke(0.6.dp, Color.White.copy(alpha = 0.4f)),
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+
+        Column(modifier = Modifier.padding(18.dp)) {
+
+            // 🔝 Top Row
             Row(
-                modifier              = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment     = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 StatusBadge()
-                Text(eta, fontFamily = Roboto, fontSize = 12.sp, color = DashTextLight)
+                Text(
+                    eta,
+                    fontFamily = Roboto,
+                    fontSize = 12.sp,
+                    color = DashTextLight
+                )
             }
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(16.dp))
 
+            // 🔧 Service Row
             Row(verticalAlignment = Alignment.CenterVertically) {
+
                 Box(
-                    modifier         = Modifier
-                        .size(44.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Primary.copy(alpha = 0.10f)),
+                    modifier = Modifier
+                        .size(58.dp)
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(
+                            Brush.linearGradient(
+                                listOf(
+                                    Primary.copy(alpha = 0.25f),
+                                    Primary.copy(alpha = 0.10f)
+                                )
+                            )
+                        ),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(Icons.Default.Build, null, tint = Primary, modifier = Modifier.size(22.dp))
+                    Icon(
+                        Icons.Default.Build,
+                        contentDescription = null,
+                        tint = Primary,
+                        modifier = Modifier.size(28.dp)
+                    )
                 }
-                Spacer(Modifier.width(12.dp))
+
+                Spacer(Modifier.width(14.dp))
+
                 Column {
-                    Text(serviceName, fontFamily = Montserrat, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, color = DashTextPrimary)
-                    Text(serviceDesc, fontFamily = Roboto, fontSize = 13.sp, color = DashTextSecondary)
+                    Text(
+                        serviceName,
+                        fontFamily = Montserrat,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 16.sp,
+                        color = DashTextPrimary
+                    )
+                    Text(
+                        serviceDesc,
+                        fontFamily = Roboto,
+                        fontSize = 13.sp,
+                        color = DashTextSecondary
+                    )
                 }
             }
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(16.dp))
 
+            // 📍 Location Row
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.LocationOn, null, tint = IconRed, modifier = Modifier.size(16.dp))
-                Spacer(Modifier.width(4.dp))
-                Text(location, fontFamily = Roboto, fontSize = 13.sp, color = DashTextSecondary)
+                Icon(
+                    Icons.Default.LocationOn,
+                    contentDescription = null,
+                    tint = IconRed,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    location,
+                    fontFamily = Roboto,
+                    fontSize = 13.sp,
+                    color = DashTextSecondary
+                )
             }
         }
     }
 }
-
 // ── Status Badge ──────────────────────────────────────
 
 @Composable
@@ -268,6 +408,8 @@ fun StatusBadge(
         Text(label, fontFamily = Roboto, fontWeight = FontWeight.Medium, fontSize = 12.sp, color = color)
     }
 }
+
+
 
 // ── Bottom Navigation Bar ─────────────────────────────
 

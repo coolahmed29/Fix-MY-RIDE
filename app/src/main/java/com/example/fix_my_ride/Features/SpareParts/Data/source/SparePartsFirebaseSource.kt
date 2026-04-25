@@ -105,7 +105,7 @@ class SparePartsFirebaseSource @Inject constructor(
         return try {
             val snapshot = firestore
                 .collection(VENDORS_COLLECTION)
-                .whereEqualTo("partId", partId)
+                .whereEqualTo("part_id", partId)
                 .get()
                 .await()
 

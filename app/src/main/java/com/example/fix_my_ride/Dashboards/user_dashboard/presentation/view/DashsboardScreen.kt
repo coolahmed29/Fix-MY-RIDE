@@ -11,6 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.fix_my_ride.ui.Components.ActiveRequestCard
@@ -22,7 +23,9 @@ import com.example.fix_my_ride.ui.Components.HeroSection
 import com.example.fix_my_ride.ui.theme.*
 
 @Composable
-fun DashboardScreen() {
+fun DashboardScreen(
+    onNavigateToSpareParts : () -> Unit = {}
+) {
 
     var selectedNav by remember { mutableIntStateOf(0) }
 
@@ -33,10 +36,12 @@ fun DashboardScreen() {
             IconYellow,
             IconYellow.copy(alpha = 0.15f)
         ),
-        FeatureCard("Spare Parts",   Icons.Default.Build,        IconRed,    IconRed.copy(alpha = 0.15f)),
+        FeatureCard("Spare Parts",   Icons.Default.Build,        IconRed,    IconRed.copy(alpha = 0.15f,),onClick   =onNavigateToSpareParts),
         FeatureCard("AI Assistant",  Icons.Default.SmartToy,     IconGreen,  IconGreen.copy(alpha = 0.15f)),
         FeatureCard("Tow Service",   Icons.Default.DirectionsCar, IconOrange, IconOrange.copy(alpha = 0.15f))
     )
+
+
 
     val navItems = listOf(
         BottomNavItem(Icons.Default.Home, "Home"),
@@ -57,7 +62,9 @@ fun DashboardScreen() {
     ) { paddingValues ->
 
         LazyColumn(
-            modifier       = Modifier.fillMaxSize().padding(paddingValues),
+            modifier       = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
             contentPadding = PaddingValues(bottom = 16.dp)
         ) {
 
@@ -79,6 +86,9 @@ fun DashboardScreen() {
     }
 }
 
+
+
+
 @Composable
 private fun SectionTitle(title: String, modifier: Modifier = Modifier) {
     Text(
@@ -89,4 +99,7 @@ private fun SectionTitle(title: String, modifier: Modifier = Modifier) {
         color      = DashTextPrimary,
         modifier   = modifier
     )
+
+
+
 }
