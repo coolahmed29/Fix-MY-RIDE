@@ -74,7 +74,7 @@ import com.example.fix_my_ride.ui.theme.TextSecondary
 
 @Composable
 fun LoginScreen(
-    onLoginSuccess       : () -> Unit,
+    onLoginSuccess       :  () -> Unit,
     onNavigateToRegister : () -> Unit,
     onBack               : () -> Unit = {},
     viewModel            : AuthViewModel = hiltViewModel()
@@ -85,6 +85,7 @@ fun LoginScreen(
 
     val loginState by viewModel.loginState
         .collectAsStateWithLifecycle()
+    val state by viewModel.loginState.collectAsStateWithLifecycle()
 
     val isLoading = loginState is AuthResult.Loading
     val errorMessage = (loginState as? AuthResult.Error)?.message

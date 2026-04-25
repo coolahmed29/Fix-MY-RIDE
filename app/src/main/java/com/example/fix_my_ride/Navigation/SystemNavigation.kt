@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.fix_my_ride.Dashboards.user_dashboard.presentation.view.DashboardScreen
 import com.example.fix_my_ride.Features.Authentication.Presentation.View.LoginScreen
 import com.example.fix_my_ride.Features.Authentication.Presentation.View.RegisterScreen
 
@@ -33,7 +34,7 @@ fun SystemNavigation() {
         composable<LoginScreen> {
             LoginScreen(
                 onLoginSuccess = {
-                    // TODO: Navigate to your main/home screen
+                    navController.navigate(UserDashboard)
                 },
                 onNavigateToRegister = {
                     navController.navigate(RegistrationScreen)
@@ -43,6 +44,9 @@ fun SystemNavigation() {
                 }
 
             )
+        }
+        composable<UserDashboard>{
+            DashboardScreen()
         }
 
     }
