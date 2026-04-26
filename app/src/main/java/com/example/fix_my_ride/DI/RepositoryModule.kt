@@ -4,6 +4,14 @@ package com.example.fix_my_ride.DI
 
 import com.example.fix_my_ride.Features.Authentication.data.repository.AuthRepositoryImpl
 import com.example.fix_my_ride.Features.Authentication.Domain.repository.AuthRepository
+import com.example.fix_my_ride.Features.Detailing.data.repository.BookingRepositoryImpl
+import com.example.fix_my_ride.Features.Detailing.data.repository.DetailingRepositoryImpl
+import com.example.fix_my_ride.Features.Detailing.data.repository.ReviewRepositoryImpl
+import com.example.fix_my_ride.Features.Detailing.data.repository.ShowcaseRepositoryImpl
+import com.example.fix_my_ride.Features.Detailing.domain.repository.BookingRepository
+import com.example.fix_my_ride.Features.Detailing.domain.repository.DetailingRepository
+import com.example.fix_my_ride.Features.Detailing.domain.repository.ReviewRepository
+import com.example.fix_my_ride.Features.Detailing.domain.repository.ShowcaseRepository
 import com.example.fix_my_ride.Features.SpareParts.Data.repository.SparePartsRepositoryImpl
 import com.example.fix_my_ride.Features.SpareParts.Domain.repository.SparePartsRepository
 import dagger.Binds
@@ -28,4 +36,29 @@ abstract class RepositoryModule {
     abstract fun bindSparePartsRepository(
         impl: SparePartsRepositoryImpl
     ): SparePartsRepository
+
+
+
+    // DI/RepositoryModule.kt mein add karo
+    @Binds @Singleton
+    abstract fun bindDetailingRepository(
+        impl: DetailingRepositoryImpl
+    ): DetailingRepository
+
+    @Binds @Singleton
+    abstract fun bindBookingRepository(
+        impl: BookingRepositoryImpl
+    ): BookingRepository
+
+    @Binds @Singleton
+    abstract fun bindReviewRepository(
+        impl: ReviewRepositoryImpl
+    ): ReviewRepository
+
+    @Binds @Singleton
+    abstract fun bindShowcaseRepository(
+        impl: ShowcaseRepositoryImpl
+    ): ShowcaseRepository
+
+
 }

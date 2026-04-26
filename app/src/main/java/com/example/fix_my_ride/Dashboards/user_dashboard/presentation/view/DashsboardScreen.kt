@@ -24,7 +24,8 @@ import com.example.fix_my_ride.ui.theme.*
 
 @Composable
 fun DashboardScreen(
-    onNavigateToSpareParts : () -> Unit = {}
+    onNavigateToSpareParts : () -> Unit = {},
+    onNavigateToDetailing  : () -> Unit = {}
 ) {
 
     var selectedNav by remember { mutableIntStateOf(0) }
@@ -37,8 +38,8 @@ fun DashboardScreen(
             IconYellow.copy(alpha = 0.15f)
         ),
         FeatureCard("Spare Parts",   Icons.Default.Build,        IconRed,    IconRed.copy(alpha = 0.15f,),onClick   =onNavigateToSpareParts),
-        FeatureCard("AI Assistant",  Icons.Default.SmartToy,     IconGreen,  IconGreen.copy(alpha = 0.15f)),
-        FeatureCard("Tow Service",   Icons.Default.DirectionsCar, IconOrange, IconOrange.copy(alpha = 0.15f))
+        FeatureCard("AI Assistant",  Icons.Default.SmartToy,     IconGreen,  IconGreen.copy(alpha = 0.15f), ),
+        FeatureCard("Car Detailing",   Icons.Default.DirectionsCar, IconOrange, IconOrange.copy(alpha = 0.15f), onClick = onNavigateToDetailing)
     )
 
 

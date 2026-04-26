@@ -25,6 +25,7 @@ interface AuthRepository {
     suspend fun saveToken(token: String)
     suspend fun getStoredToken(): String?
 
+
     // ── Session ───────────────────────────────────────
     fun isUserLoggedIn(): Boolean
 }

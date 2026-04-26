@@ -92,6 +92,8 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
+  
+
     // ── SESSION ───────────────────────────────────────
     override fun isUserLoggedIn(): Boolean =
         firebaseAuthSource.isUserLoggedIn()

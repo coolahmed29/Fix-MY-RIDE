@@ -3,7 +3,6 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 
-    // ✅ Sirf yeh teen naye add karo — upar wale duplicate mat likho
     id("com.google.gms.google-services")
     id("com.google.dagger.hilt.android")
     id("com.google.devtools.ksp")
@@ -47,58 +46,63 @@ android {
     }
 }
 
-// ✅ Sirf EK dependencies block — nested nahi
 dependencies {
 
-    // ── Default Android ───────────────────────────────────
+    // 🔥 Firebase BoM (ONLY ONCE)
+    implementation(platform(libs.firebase.bom))
+
+    // ── Android Core ─────────────────────────────
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
+
+    // ── Compose ─────────────────────────────────
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-    implementation(libs.firebase.database)
-    implementation(libs.firebase.firestore)
     implementation(libs.androidx.ui.text)
-    implementation(libs.material3)
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.ui.test.junit4)
-    debugImplementation(libs.androidx.ui.tooling)
-    debugImplementation(libs.androidx.ui.test.manifest)
 
-    // ── Hilt ──────────────────────────────────────────────
+    // ── ConstraintLayout ────────────────────────
+    implementation(libs.androidx.constraintlayout)
+
+    // ── Firebase (NO versions here) ─────────────
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
+    implementation(libs.firebase.database)
+    implementation(libs.firebase.storage)
+
+    // ── Hilt ────────────────────────────────────
     implementation("com.google.dagger:hilt-android:2.51.1")
     ksp("com.google.dagger:hilt-compiler:2.51.1")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
 
-    // ── Firebase ──────────────────────────────────────────
-    implementation(platform("com.google.firebase:firebase-bom:33.1.0"))
-    implementation("com.google.firebase:firebase-auth-ktx")
-    implementation("com.google.firebase:firebase-firestore-ktx")
-
-    // ── Material Icons Extended ───────────────────────────
-    implementation("androidx.compose.material:material-icons-extended")
-
-    // ── Navigation ────────────────────────────────────────
+    // ── Navigation ──────────────────────────────
     implementation("androidx.navigation:navigation-compose:2.8.0")
 
-    // ── Serialization ─────────────────────────────────────
+    // ── Material Icons ──────────────────────────
+    implementation("androidx.compose.material:material-icons-extended")
+
+    // ── Serialization ───────────────────────────
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.1")
 
-    // ── ViewModel + Lifecycle ─────────────────────────────
+    // ── ViewModel + Lifecycle ───────────────────
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.0")
 
-    // ── Coroutines ────────────────────────────────────────
+    // ── Coroutines ──────────────────────────────
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1")
 
-    // ── DataStore ─────────────────────────────────────────
+    // ── DataStore ───────────────────────────────
     implementation("androidx.datastore:datastore-preferences:1.1.1")
+
+    // ── Testing ────────────────────────────────
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    debugImplementation(libs.androidx.ui.tooling)
 }
