@@ -16,6 +16,7 @@ constraintlayout = "2.2.1"
 
 # 🔥 Firebase BoM (ONLY this version needed)
 firebaseBom = "33.7.0"
+firebaseFirestore = "26.2.0"
 
 [libraries]
 # AndroidX
@@ -47,6 +48,7 @@ firebase-auth = { group = "com.google.firebase", name = "firebase-auth-ktx" }
 firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore-ktx" }
 firebase-database = { group = "com.google.firebase", name = "firebase-database-ktx" }
 firebase-storage = { group = "com.google.firebase", name = "firebase-storage-ktx" }
+google-firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore", version.ref = "firebaseFirestore" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

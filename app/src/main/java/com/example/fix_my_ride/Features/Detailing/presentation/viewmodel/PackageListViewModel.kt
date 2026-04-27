@@ -16,26 +16,29 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+
 @HiltViewModel
 class PackageListViewModel @Inject constructor(
     private val getPackagesUseCase: GetPackagesUseCase
 ) : ViewModel() {
 
-    // ── Packages State ────────────────────────────────
+    // ✅ Original list — kabhi change nahi hogi
+    private val _allPackages = MutableStateFlow<List<DetailingPackage>>(emptyList())
+
+    // ── UI ko yeh dikhao — filtered + sorted
     private val _packagesState =
         MutableStateFlow<AuthResult<List<DetailingPackage>>>(AuthResult.Loading)
     val packagesState: StateFlow<AuthResult<List<DetailingPackage>>> =
         _packagesState.asStateFlow()
 
-    // ── Selected Filter ───────────────────────────────
+    // ── Filters ───────────────────────────────────────
     private val _selectedType = MutableStateFlow<PackageType?>(null)
     val selectedType: StateFlow<PackageType?> = _selectedType.asStateFlow()
 
-    // ── Sort Option ───────────────────────────────────
     private val _sortOption = MutableStateFlow(PackageSortOption.DEFAULT)
     val sortOption: StateFlow<PackageSortOption> = _sortOption.asStateFlow()
 
-    // ── Selected Package (detail ke liye) ─────────────
+    // ── Selected Package ──────────────────────────────
     private val _selectedPackage = MutableStateFlow<DetailingPackage?>(null)
     val selectedPackage: StateFlow<DetailingPackage?> =
         _selectedPackage.asStateFlow()
@@ -44,63 +47,54 @@ class PackageListViewModel @Inject constructor(
         loadPackages()
     }
 
-    // ── Load Packages ─────────────────────────────────
-    fun loadPackages() {
+    // ── Load — Original list save karo ────────────────
+    private fun loadPackages() {
         viewModelScope.launch {
             _packagesState.value = AuthResult.Loading
             getPackagesUseCase().collect { result ->
-                _packagesState.value = when (result) {
+                when (result) {
                     is AuthResult.Success -> {
-                        AuthResult.Success(
-                            applyFiltersAndSort(
-                                packages   = result.data,
-                                type       = _selectedType.value,
-                                sortOption = _sortOption.value
-                            )
-                        )
+                        // ✅ Original list save karo
+                        _allPackages.value = result.data
+
+                        // UI ko filtered result do
+                        applyAndUpdate()
                     }
-                    else -> result
+                    else -> _packagesState.value = result
                 }
             }
         }
     }
 
-    // ── Filter by Type ────────────────────────────────
+    // ── Type Filter ───────────────────────────────────
     fun onTypeSelect(type: PackageType?) {
         _selectedType.value = type
-        val current = _packagesState.value
-        if (current is AuthResult.Success) {
-            _packagesState.value = AuthResult.Success(
-                applyFiltersAndSort(
-                    packages   = current.data,
-                    type       = type,
-                    sortOption = _sortOption.value
-                )
-            )
-        }
+        // ✅ _allPackages se filter karo — UI state se nahi
+        applyAndUpdate()
     }
 
     // ── Sort ──────────────────────────────────────────
     fun onSortSelect(option: PackageSortOption) {
         _sortOption.value = option
-        val current = _packagesState.value
-        if (current is AuthResult.Success) {
-            _packagesState.value = AuthResult.Success(
-                applyFiltersAndSort(
-                    packages   = current.data,
-                    type       = _selectedType.value,
-                    sortOption = option
-                )
-            )
-        }
+        applyAndUpdate()
     }
 
-    // ── Select Package ────────────────────────────────
+    // ── Package Select ────────────────────────────────
     fun onPackageSelect(pkg: DetailingPackage) {
         _selectedPackage.value = pkg
     }
 
-    // ── Apply Filters + Sort ──────────────────────────
+    // ✅ Yeh function har baar _allPackages se fresh filter karta hai
+    private fun applyAndUpdate() {
+        val filtered = applyFiltersAndSort(
+            packages   = _allPackages.value,   // ← Hamesha original list
+            type       = _selectedType.value,
+            sortOption = _sortOption.value
+        )
+        _packagesState.value = AuthResult.Success(filtered)
+    }
+
+    // ── Filter + Sort Logic ───────────────────────────
     private fun applyFiltersAndSort(
         packages   : List<DetailingPackage>,
         type       : PackageType?,
@@ -115,7 +109,7 @@ class PackageListViewModel @Inject constructor(
 
         // Sort
         result = when (sortOption) {
-            PackageSortOption.DEFAULT  -> result
+            PackageSortOption.DEFAULT    -> result
             PackageSortOption.PRICE_LOW  -> result.sortedBy { it.price }
             PackageSortOption.PRICE_HIGH -> result.sortedByDescending { it.price }
             PackageSortOption.POPULAR    -> result.sortedByDescending { it.rating }

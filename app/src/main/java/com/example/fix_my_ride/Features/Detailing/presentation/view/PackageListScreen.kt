@@ -2,6 +2,12 @@ package com.example.fix_my_ride.Features.Detailing.presentation.view
 
 // Features/Detailing/Presentation/View/PackageDetailScreen.kt
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -24,13 +30,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -46,18 +50,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.fix_my_ride.Features.Authentication.Domain.model.AuthResult
 import com.example.fix_my_ride.Features.Detailing.domain.model.DetailingPackage
 import com.example.fix_my_ride.Features.Detailing.domain.model.PackageType
 import com.example.fix_my_ride.Features.Detailing.presentation.viewmodel.PackageListViewModel
 import com.example.fix_my_ride.Features.Detailing.presentation.viewmodel.PackageSortOption
-import com.example.fix_my_ride.Features.Authentication.Domain.model.AuthResult
 import com.example.fix_my_ride.ui.Components.CategoryChip
 import com.example.fix_my_ride.ui.Components.EmptyState
 import com.example.fix_my_ride.ui.theme.DashBackground
@@ -69,6 +76,103 @@ import com.example.fix_my_ride.ui.theme.IconYellow
 import com.example.fix_my_ride.ui.theme.Montserrat
 import com.example.fix_my_ride.ui.theme.Primary
 import com.example.fix_my_ride.ui.theme.Roboto
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Shimmer Skeleton Box
+// ─────────────────────────────────────────────────────────────────────────────
+
+@Composable
+fun SkeletonBox(
+    width: Dp,
+    height: Dp,
+    modifier: Modifier = Modifier
+) {
+    val shimmerColors = listOf(
+        Color.LightGray.copy(alpha = 0.3f),
+        Color.LightGray.copy(alpha = 0.6f),
+        Color.LightGray.copy(alpha = 0.3f),
+    )
+
+    val transition = rememberInfiniteTransition(label = "shimmer")
+    val translateAnim by transition.animateFloat(
+        initialValue  = 0f,
+        targetValue   = 1000f,
+        animationSpec = infiniteRepeatable(
+            animation  = tween(durationMillis = 1000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "shimmerTranslate"
+    )
+
+    val brush = Brush.linearGradient(
+        colors = shimmerColors,
+        start  = Offset(translateAnim - 200f, 0f),
+        end    = Offset(translateAnim, 0f)
+    )
+
+    Box(
+        modifier = modifier
+            .width(width)
+            .height(height)
+            .clip(RoundedCornerShape(6.dp))
+            .background(brush)
+    )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Package Card Skeleton
+// ─────────────────────────────────────────────────────────────────────────────
+
+@Composable
+fun PackageCardSkeleton() {
+    Card(
+        modifier  = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 6.dp),
+        shape     = RoundedCornerShape(16.dp),
+        colors    = CardDefaults.cardColors(containerColor = DashCardBg),
+        elevation = CardDefaults.cardElevation(0.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+
+            // Top Row – Badge + Rating
+            Row(
+                modifier              = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                SkeletonBox(width = 70.dp, height = 20.dp)
+                SkeletonBox(width = 40.dp, height = 16.dp)
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Title
+            SkeletonBox(width = 180.dp, height = 20.dp)
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Description lines
+            SkeletonBox(width = 220.dp, height = 14.dp)
+            Spacer(modifier = Modifier.height(4.dp))
+            SkeletonBox(width = 150.dp, height = 14.dp)
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Bottom Row – Price + Duration
+            Row(
+                modifier              = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                SkeletonBox(width = 80.dp, height = 20.dp)
+                SkeletonBox(width = 40.dp, height = 16.dp)
+            }
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Main Screen
+// ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
 fun PackageListScreen(
@@ -91,7 +195,7 @@ fun PackageListScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // ── Header ─────────────────────────────────
+            // ── Header ─────────────────────────────────────────────────────
             PackageListHeader(
                 onBack       = onBack,
                 sortOption   = sortOption,
@@ -103,21 +207,19 @@ fun PackageListScreen(
                 }
             )
 
+            // ── LazyColumn – Filter Chips + Package List ────────────────
             LazyColumn(
                 modifier       = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(bottom = 24.dp)
             ) {
 
-                // ── Type Filter Chips ──────────────────
+                // ── Type Filter Chips ───────────────────────────────────
                 item(key = "filters") {
                     LazyRow(
-                        contentPadding        = PaddingValues(
-                            horizontal = 20.dp
-                        ),
+                        contentPadding        = PaddingValues(horizontal = 20.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         modifier              = Modifier.padding(vertical = 12.dp)
                     ) {
-                        // All chip
                         item {
                             CategoryChip(
                                 label      = "All",
@@ -125,8 +227,6 @@ fun PackageListScreen(
                                 onClick    = { viewModel.onTypeSelect(null) }
                             )
                         }
-
-                        // Package type chips
                         items(PackageType.values().toList()) { type ->
                             CategoryChip(
                                 label      = type.displayName,
@@ -137,25 +237,20 @@ fun PackageListScreen(
                     }
                 }
 
-                // ── Packages ───────────────────────────
+                // ── Content based on State ──────────────────────────────
                 when (val state = packagesState) {
 
+                    // Loading → 5 shimmer skeleton cards
                     is AuthResult.Loading -> {
-                        item(key = "loading") {
-                            Box(
-                                modifier         = Modifier
-                                    .fillMaxWidth()
-                                    .padding(60.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                CircularProgressIndicator(
-                                    color    = Primary,
-                                    modifier = Modifier.size(36.dp)
-                                )
-                            }
+                        items(
+                            count = 5,
+                            key   = { "skeleton_$it" }
+                        ) {
+                            PackageCardSkeleton()
                         }
                     }
 
+                    // Error state
                     is AuthResult.Error -> {
                         item(key = "error") {
                             EmptyState(
@@ -166,6 +261,7 @@ fun PackageListScreen(
                         }
                     }
 
+                    // Success → actual package cards
                     is AuthResult.Success -> {
                         if (state.data.isEmpty()) {
                             item(key = "empty") {
@@ -181,8 +277,8 @@ fun PackageListScreen(
                                 key   = { it.id }
                             ) { pkg ->
                                 PackageCard(
-                                    pkg      = pkg,
-                                    onClick  = {
+                                    pkg     = pkg,
+                                    onClick = {
                                         viewModel.onPackageSelect(pkg)
                                         onPackageClick(pkg)
                                     },
@@ -200,7 +296,10 @@ fun PackageListScreen(
     }
 }
 
-// ── Header ────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Header
+// ─────────────────────────────────────────────────────────────────────────────
+
 @Composable
 private fun PackageListHeader(
     onBack       : () -> Unit,
@@ -210,16 +309,16 @@ private fun PackageListHeader(
     onSortSelect : (PackageSortOption) -> Unit
 ) {
     Row(
-        modifier          = Modifier
+        modifier              = Modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment     = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             // Back Button
             Box(
-                modifier = Modifier
+                modifier         = Modifier
                     .size(40.dp)
                     .shadow(4.dp, CircleShape)
                     .clip(CircleShape)
@@ -247,10 +346,10 @@ private fun PackageListHeader(
             )
         }
 
-        // Sort Button + Menu
+        // Sort Button + Dropdown
         Box {
             Box(
-                modifier = Modifier
+                modifier         = Modifier
                     .size(40.dp)
                     .shadow(4.dp, CircleShape)
                     .clip(CircleShape)
@@ -268,7 +367,7 @@ private fun PackageListHeader(
             }
 
             DropdownMenu(
-                expanded        = showSortMenu,
+                expanded         = showSortMenu,
                 onDismissRequest = { onSortToggle() }
             ) {
                 PackageSortOption.values().forEach { option ->
@@ -277,8 +376,8 @@ private fun PackageListHeader(
                             Text(
                                 text       = option.label,
                                 fontFamily = Roboto,
-                                color      = if (sortOption == option)
-                                    Primary else DashTextPrimary
+                                color      = if (sortOption == option) Primary
+                                else DashTextPrimary
                             )
                         },
                         onClick = { onSortSelect(option) }
@@ -289,7 +388,10 @@ private fun PackageListHeader(
     }
 }
 
-// ── Package Card ──────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Package Card
+// ─────────────────────────────────────────────────────────────────────────────
+
 @Composable
 private fun PackageCard(
     pkg      : DetailingPackage,
@@ -311,13 +413,12 @@ private fun PackageCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
 
-            // ── Type Badge + Rating ────────────────────
+            // ── Type Badge + Rating ────────────────────────────────────
             Row(
                 modifier              = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment     = Alignment.CenterVertically
             ) {
-                // Type Badge
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(20.dp))
@@ -333,7 +434,6 @@ private fun PackageCard(
                     )
                 }
 
-                // Rating
                 Row(
                     verticalAlignment     = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(3.dp)
@@ -356,7 +456,7 @@ private fun PackageCard(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // ── Name ──────────────────────────────────
+            // ── Package Name ───────────────────────────────────────────
             Text(
                 text       = pkg.name,
                 fontFamily = Montserrat,
@@ -367,7 +467,7 @@ private fun PackageCard(
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            // ── Description ───────────────────────────
+            // ── Description ────────────────────────────────────────────
             Text(
                 text       = pkg.description,
                 fontFamily = Roboto,
@@ -379,7 +479,7 @@ private fun PackageCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // ── Price + Duration ──────────────────────
+            // ── Price + Duration ───────────────────────────────────────
             Row(
                 modifier              = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,

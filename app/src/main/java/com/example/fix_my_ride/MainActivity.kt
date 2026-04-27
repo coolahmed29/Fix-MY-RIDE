@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import com.example.fix_my_ride.Navigation.SystemNavigation
+import com.example.fix_my_ride.utils.DetailingSeedData
 import com.example.fix_my_ride.utils.SeedData
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -32,6 +33,7 @@ class MainActivity : ComponentActivity() {
 
         lifecycleScope.launch {
             SeedData.seedAll()
+            DetailingSeedData.seedAll()
         }
 
         setContent {
