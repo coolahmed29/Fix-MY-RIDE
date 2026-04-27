@@ -21,3 +21,10 @@ import kotlinx.serialization.Serializable
 @Serializable data object BookingScreen
 @Serializable data object BookingConfirmScreen
 @Serializable data object ReviewScreen
+
+// ── Chatting ─────────────────────────────────────────
+@Serializable
+data class ChatScreen(
+    val vendorId   : String,
+    val vendorName : String
+)

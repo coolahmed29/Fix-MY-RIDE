@@ -9,6 +9,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.example.fix_my_ride.Features.Authentication.Domain.model.AuthResult
 import com.example.fix_my_ride.Features.Detailing.presentation.view.BookingConfirmScreen
 import com.example.fix_my_ride.Features.Detailing.presentation.view.BookingScreen
@@ -20,6 +21,7 @@ import com.example.fix_my_ride.Features.Detailing.presentation.viewmodel.Package
 import com.example.fix_my_ride.Features.Authentication.Presentation.View.LoginScreen
 import com.example.fix_my_ride.Features.Authentication.Presentation.View.RegisterScreen
 import com.example.fix_my_ride.Dashboards.user_dashboard.presentation.view.DashboardScreen
+import com.example.fix_my_ride.Features.Chat.presentation.view.ChatScreen
 import com.example.fix_my_ride.Features.SpareParts.Presentation.view.PartDetailScreen
 import com.example.fix_my_ride.Features.SpareParts.Presentation.view.SparePartsScreen
 import com.example.fix_my_ride.Features.SpareParts.Presentation.viewmodel.SparePartsViewModel
@@ -62,19 +64,24 @@ fun SystemNavigation() {
             )
         }
 
-        // ── Dashboard ─────────────────────────────────
         composable<UserDashboard> {
             DashboardScreen(
                 onNavigateToSpareParts = {
-                    navController.navigate(SparePartsScreen)
+                    navController.navigate(SparePartsScreen) {
+                        launchSingleTop = true  // ✅ ADD THIS
+                        restoreState = true      // ✅ ADD THIS
+                    }
                 },
                 onNavigateToDetailing = {
-                    navController.navigate(PackageListScreen)
+                    navController.navigate(PackageListScreen) {
+                        launchSingleTop = true  // ✅ ADD THIS
+                        restoreState = true      // ✅ ADD THIS
+                    }
                 }
             )
         }
 
-        // ── Spare Parts ───────────────────────────────
+// ── Spare Parts ───────────────────────────────
         composable<SparePartsScreen> {
             val viewModel = hiltViewModel<SparePartsViewModel>()
             SparePartsScreen(
@@ -82,7 +89,30 @@ fun SystemNavigation() {
                     viewModel.onPartSelect(part)
                     navController.navigate(PartDetailScreen)
                 },
-                onBack    = { navController.popBackStack() },
+                onBack = {
+                    // ✅ ADD THIS - صاف طریقے سے واپس جاؤ
+                    navController.navigate(UserDashboard) {
+                        popUpTo<SparePartsScreen> { inclusive = true }
+                    }
+                },
+                viewModel = viewModel
+            )
+        }
+
+// ── Package List ──────────────────────────────
+        composable<PackageListScreen> {
+            val viewModel = hiltViewModel<PackageListViewModel>()
+            PackageListScreen(
+                onPackageClick = { pkg ->
+                    viewModel.onPackageSelect(pkg)
+                    navController.navigate(PackageDetailScreen)
+                },
+                onBack = {
+                    // ✅ ADD THIS - صاف طریقے سے واپس جاؤ
+                    navController.navigate(UserDashboard) {
+                        popUpTo<PackageListScreen> { inclusive = true }
+                    }
+                },
                 viewModel = viewModel
             )
         }
@@ -97,52 +127,37 @@ fun SystemNavigation() {
 
             if (part != null) {
                 PartDetailScreen(
-                    part      = part,
-                    onBack    = { navController.popBackStack() },
-                    viewModel = viewModel
+                    part        = part,
+                    onBack      = { navController.popBackStack() },
+                    onChatClick = { vendorId, vendorName ->       // ✅ add
+                        navController.navigate(
+                            ChatScreen(
+                                vendorId   = vendorId,
+                                vendorName = vendorName
+                            )
+                        )
+                    },
+                    viewModel   = viewModel
                 )
             }
         }
-
         // ── Package List ──────────────────────────────
-        composable<PackageListScreen> {
-            val viewModel = hiltViewModel<PackageListViewModel>()
-            PackageListScreen(
-                onPackageClick = { pkg ->
-                    viewModel.onPackageSelect(pkg)
-                    navController.navigate(PackageDetailScreen)
-                },
-                onBack    = { navController.popBackStack() },
-                viewModel = viewModel
-            )
-        }
+
 
         // ── Package Detail ────────────────────────────
-        composable<PackageDetailScreen> {
-            val pkgListEntry = remember(it) {
-                navController.getBackStackEntry<PackageListScreen>()
-            }
-            val viewModel = hiltViewModel<PackageListViewModel>(pkgListEntry)
-            val pkg = viewModel.selectedPackage
-                .collectAsStateWithLifecycle().value
+        // ── Package Detail ────────────────────────────────────
 
-            pkg?.let { safePkg ->
-                PackageDetailScreen(
-                    pkg       = safePkg,
-                    onBack    = { navController.popBackStack() },
-                    onBookNow = {
-                        navController.navigate(BookingScreen)
-                    }
-                )
-            }
-        }
-
-        // ── Booking ───────────────────────────────────
+// ── Booking ───────────────────────────────────────────
         composable<BookingScreen> {
-            val pkgListEntry = remember(it) {
+            // ✅ FIX: same pattern
+            val pkgListEntry = runCatching {
                 navController.getBackStackEntry<PackageListScreen>()
-            }
-            val pkgViewModel = hiltViewModel<PackageListViewModel>(pkgListEntry)
+            }.getOrNull()
+
+            val pkgViewModel: PackageListViewModel =
+                if (pkgListEntry != null) hiltViewModel(pkgListEntry)
+                else hiltViewModel()
+
             val pkg = pkgViewModel.selectedPackage
                 .collectAsStateWithLifecycle().value
 
@@ -150,9 +165,7 @@ fun SystemNavigation() {
             val bookingState by bookingViewModel.bookingState
                 .collectAsStateWithLifecycle()
 
-            // Success — BookingConfirm pe jao
             if (bookingState is AuthResult.Success) {
-                val booking = (bookingState as AuthResult.Success).data
                 bookingViewModel.resetBookingState()
                 navController.navigate(BookingConfirmScreen) {
                     popUpTo<BookingScreen> { inclusive = true }
@@ -168,7 +181,7 @@ fun SystemNavigation() {
                             popUpTo<BookingScreen> { inclusive = true }
                         }
                     },
-                    viewModel     = bookingViewModel
+                    viewModel = bookingViewModel
                 )
             }
         }
@@ -212,6 +225,16 @@ fun SystemNavigation() {
                 packageName = "",
                 onBack      = { navController.popBackStack() },
                 onSubmitted = { navController.popBackStack() }
+            )
+        }
+
+
+        composable<ChatScreen> { backStackEntry ->
+            val route = backStackEntry.toRoute<ChatScreen>()
+            ChatScreen(
+                vendorId   = route.vendorId,
+                vendorName = route.vendorName,
+                onBack     = { navController.popBackStack() }
             )
         }
     }

@@ -4,6 +4,8 @@ package com.example.fix_my_ride.DI
 
 import com.example.fix_my_ride.Features.Authentication.data.repository.AuthRepositoryImpl
 import com.example.fix_my_ride.Features.Authentication.Domain.repository.AuthRepository
+import com.example.fix_my_ride.Features.Chat.data.repository.ChatRepositoryImpl
+import com.example.fix_my_ride.Features.Chat.domain.repository.ChatRepository
 import com.example.fix_my_ride.Features.Detailing.data.repository.BookingRepositoryImpl
 import com.example.fix_my_ride.Features.Detailing.data.repository.DetailingRepositoryImpl
 import com.example.fix_my_ride.Features.Detailing.data.repository.ReviewRepositoryImpl
@@ -59,6 +61,12 @@ abstract class RepositoryModule {
     abstract fun bindShowcaseRepository(
         impl: ShowcaseRepositoryImpl
     ): ShowcaseRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindChatRepository(
+        impl: ChatRepositoryImpl
+    ): ChatRepository
 
 
 }

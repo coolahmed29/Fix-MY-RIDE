@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Star
@@ -52,8 +53,9 @@ import com.example.fix_my_ride.ui.theme.Roboto
 fun VendorCard(
     vendor    : Vendor,
     onBuyNow  : () -> Unit,
-    onContact : () -> Unit,
+    onChat : () -> Unit,
     modifier  : Modifier = Modifier
+
 ) {
     Card(
         modifier  = modifier
@@ -235,19 +237,19 @@ fun VendorCard(
             ) {
                 // Contact Button
                 OutlinedButton(
-                    onClick  = onContact,
+                    onClick  = onChat,
                     modifier = Modifier.weight(1f),
                     shape    = RoundedCornerShape(12.dp),
                     enabled  = vendor.inStock
                 ) {
                     Icon(
-                        imageVector        = Icons.Default.Phone,
+                        imageVector        = Icons.Default.Chat,
                         contentDescription = null,
                         modifier           = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text       = "Contact",
+                        text       = "Chat",
                         fontFamily = Roboto,
                         fontWeight = FontWeight.Medium,
                         fontSize   = 13.sp

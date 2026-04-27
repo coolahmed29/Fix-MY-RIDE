@@ -43,6 +43,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.fix_my_ride.Features.Authentication.Domain.model.AuthResult
 import com.example.fix_my_ride.Features.SpareParts.Domain.model.Part
+import com.example.fix_my_ride.Features.SpareParts.Domain.model.Vendor
 import com.example.fix_my_ride.Features.SpareParts.Presentation.viewmodel.SparePartsViewModel
 import com.example.fix_my_ride.ui.Components.EmptyState
 import com.example.fix_my_ride.ui.Components.VendorCard
@@ -57,9 +58,10 @@ import com.example.fix_my_ride.ui.theme.Roboto
 
 @Composable
 fun PartDetailScreen(
-    part      : Part,
-    onBack    : () -> Unit,
-    viewModel : SparePartsViewModel = hiltViewModel()
+    part        : Part,
+    onBack      : () -> Unit,
+    onChatClick : (vendorId: String, vendorName: String) -> Unit,  // ✅ lambda
+    viewModel   : SparePartsViewModel = hiltViewModel()
 ) {
     val vendorsState by viewModel.vendorsState
         .collectAsStateWithLifecycle()
@@ -80,37 +82,31 @@ fun PartDetailScreen(
             verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
 
-            // ── 1. Header ──────────────────────────────
             item(key = "header") {
-                PartDetailHeader(
-                    part   = part,
-                    onBack = onBack
-                )
+                PartDetailHeader(part = part, onBack = onBack)
             }
 
-            // ── 2. Part Info Card ──────────────────────
             item(key = "part_info") {
                 PartInfoCard(
                     part     = part,
-                    modifier = Modifier.padding(
-                        horizontal = 20.dp,
-                        vertical   = 8.dp
-                    )
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
                 )
             }
 
-            // ── 3. Vendors Section ─────────────────────
-            vendorsSection(vendorsState = vendorsState)
+            // ✅ onChatClick pass karo
+            vendorsSection(
+                vendorsState = vendorsState,
+                onChatClick  = onChatClick
+            )
         }
     }
 }
 
-// ── Vendors Section — Extension Function ──────────────
-// LazyListScope extension — clean aur readable
+// ── Vendors Section ───────────────────────────────────
 private fun LazyListScope.vendorsSection(
-    vendorsState: AuthResult<*>?
+    vendorsState : AuthResult<*>?,
+    onChatClick  : (vendorId: String, vendorName: String) -> Unit  // ✅ lambda
 ) {
-    // Section Header
     item(key = "vendors_header") {
         Row(
             modifier = Modifier
@@ -127,7 +123,6 @@ private fun LazyListScope.vendorsSection(
                 color      = DashTextPrimary
             )
 
-            // Count Badge
             if (vendorsState is AuthResult.Success<*>) {
                 val count = (vendorsState.data as? List<*>)?.size ?: 0
                 if (count > 0) {
@@ -149,27 +144,19 @@ private fun LazyListScope.vendorsSection(
         }
     }
 
-    // Content based on state
     when (vendorsState) {
 
-        // ── Loading ───────────────────────────────────
         is AuthResult.Loading -> {
             item(key = "loading") {
                 Box(
-                    modifier         = Modifier
-                        .fillMaxWidth()
-                        .padding(40.dp),
+                    modifier         = Modifier.fillMaxWidth().padding(40.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(
-                        color    = Primary,
-                        modifier = Modifier.size(32.dp)
-                    )
+                    CircularProgressIndicator(color = Primary, modifier = Modifier.size(32.dp))
                 }
             }
         }
 
-        // ── Error ─────────────────────────────────────
         is AuthResult.Error -> {
             item(key = "error") {
                 EmptyState(
@@ -180,11 +167,9 @@ private fun LazyListScope.vendorsSection(
             }
         }
 
-        // ── Success ───────────────────────────────────
         is AuthResult.Success<*> -> {
             @Suppress("UNCHECKED_CAST")
-            val vendors = vendorsState.data as? List<com.example.fix_my_ride.Features.SpareParts.Domain.model.Vendor>
-                ?: emptyList()
+            val vendors = vendorsState.data as? List<Vendor> ?: emptyList()
 
             if (vendors.isEmpty()) {
                 item(key = "empty") {
@@ -195,31 +180,23 @@ private fun LazyListScope.vendorsSection(
                     )
                 }
             } else {
-                // Single vendor banner
                 if (vendors.size == 1) {
                     item(key = "single_vendor_banner") {
                         SingleVendorBanner(
-                            modifier = Modifier.padding(
-                                horizontal = 20.dp,
-                                vertical   = 4.dp
-                            )
+                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
                         )
                     }
                 }
 
-                // ✅ Vendors list — proper LazyColumn items
-                items(
-                    items = vendors,
-                    key   = { vendor -> vendor.id }
-                ) { vendor ->
+                items(items = vendors, key = { it.id }) { vendor ->
                     VendorCard(
-                        vendor    = vendor,
-                        onBuyNow  = { /* TODO: Payment */ },
-                        onContact = { /* TODO: Call */ },
-                        modifier  = Modifier.padding(
-                            horizontal = 20.dp,
-                            vertical   = 6.dp
-                        )
+                        vendor   = vendor,
+                        onBuyNow = { /* TODO: Payment */ },
+                        onChat   = {
+                            // ✅ navController ki zaroorat nahi — lambda call karo
+                            onChatClick(vendor.id, vendor.name)
+                        },
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp)
                     )
                 }
             }
@@ -228,15 +205,10 @@ private fun LazyListScope.vendorsSection(
         null -> {
             item(key = "null_state") {
                 Box(
-                    modifier         = Modifier
-                        .fillMaxWidth()
-                        .padding(40.dp),
+                    modifier         = Modifier.fillMaxWidth().padding(40.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(
-                        color    = Primary,
-                        modifier = Modifier.size(32.dp)
-                    )
+                    CircularProgressIndicator(color = Primary, modifier = Modifier.size(32.dp))
                 }
             }
         }
@@ -302,17 +274,12 @@ private fun PartInfoCard(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .shadow(
-                elevation    = 4.dp,
-                shape        = RoundedCornerShape(16.dp),
-                ambientColor = Color.Black.copy(alpha = 0.04f)
-            )
+            .shadow(elevation = 4.dp, shape = RoundedCornerShape(16.dp), ambientColor = Color.Black.copy(alpha = 0.04f))
             .clip(RoundedCornerShape(16.dp))
             .background(DashCardBg)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
 
-            // Icon + Name
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     modifier         = Modifier
@@ -352,26 +319,15 @@ private fun PartInfoCard(
             HorizontalDivider(color = Color.Black.copy(alpha = 0.05f))
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Stats
             Row(
                 modifier              = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceAround
             ) {
-                StatItem(
-                    label = "Price From",
-                    value = "Rs ${part.price.toInt()}"
-                )
-                StatItem(
-                    label = "Rating",
-                    value = "⭐ ${part.rating}"
-                )
-                StatItem(
-                    label = "Vendors",
-                    value = "${part.vendorCount}"
-                )
+                StatItem(label = "Price From", value = "Rs ${part.price.toInt()}")
+                StatItem(label = "Rating",     value = "⭐ ${part.rating}")
+                StatItem(label = "Vendors",    value = "${part.vendorCount}")
             }
 
-            // Description
             if (part.description.isNotBlank()) {
                 Spacer(modifier = Modifier.height(14.dp))
                 HorizontalDivider(color = Color.Black.copy(alpha = 0.05f))
@@ -399,10 +355,7 @@ private fun PartInfoCard(
 
 // ── Stat Item ─────────────────────────────────────────
 @Composable
-private fun StatItem(
-    label : String,
-    value : String
-) {
+private fun StatItem(label: String, value: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             text       = value,
