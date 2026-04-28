@@ -7,9 +7,7 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <meta-data
-        android:name="com.google.android.geo.API_KEY"
-        android:value="AIzaSyCeMqWMf8VT23q0EUB5gds8Hg19j6oVjk8" />
+
 
     <application
         android:name=".MyApplication"
@@ -21,6 +19,11 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.FixMYride">
+
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyB34swa_opcG-QLika1nXzrssTfDbvGiIM" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

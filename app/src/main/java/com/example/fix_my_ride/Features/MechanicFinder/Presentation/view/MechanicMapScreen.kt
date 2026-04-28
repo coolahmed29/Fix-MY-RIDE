@@ -45,9 +45,9 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.fix_my_ride.Features.MechanicFinder.domain.model.Mechanic
+import com.example.fix_my_ride.Features.MechanicFinder.Presentation.viewmodel.MechanicFinderViewModel
 import com.example.fix_my_ride.Features.MechanicFinder.Presentation.util.LocationManager
 import com.example.fix_my_ride.Features.Authentication.Domain.model.AuthResult
-import com.example.fix_my_ride.Features.MechanicFinder.Presentation.viewmodel.MechanicFinderViewModel
 import com.example.fix_my_ride.ui.theme.DashBackground
 import com.example.fix_my_ride.ui.theme.DashCardBg
 import com.example.fix_my_ride.ui.theme.DashTextPrimary
@@ -66,6 +66,7 @@ import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
+import android.util.Log
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
@@ -79,6 +80,7 @@ fun MechanicMapScreen(
 
     var userLocation by remember { mutableStateOf<Pair<Double, Double>?>(null) }
     var isLoadingLocation by remember { mutableStateOf(true) }
+    var hasPermission by remember { mutableStateOf(false) }
 
     val mechanicsState by viewModel.nearbyMechanicsState
         .collectAsStateWithLifecycle()
@@ -91,61 +93,34 @@ fun MechanicMapScreen(
         )
     )
 
-    LaunchedEffect(Unit) {
-        if (!permissionState.allPermissionsGranted) {
-            permissionState.launchMultiplePermissionRequest()
-        } else {
-            // Get current location
+    LaunchedEffect(permissionState.allPermissionsGranted) {
+        hasPermission = permissionState.allPermissionsGranted
+
+        if (permissionState.allPermissionsGranted) {
+            Log.d("MechanicMap", "Permission granted, getting location...")
             val location = locationManager.getCurrentLocation()
-            userLocation = location
+            Log.d("MechanicMap", "Location: $location")
+
+            userLocation = location ?: Pair(24.8607, 67.0011) // Fallback to Karachi
             isLoadingLocation = false
 
-            if (location != null) {
+            if (userLocation != null) {
                 viewModel.fetchNearbyMechanics(
-                    latitude = location.first,
-                    longitude = location.second,
+                    latitude = userLocation!!.first,
+                    longitude = userLocation!!.second,
                     radiusKm = 10.0
                 )
             }
+        } else {
+            isLoadingLocation = false
         }
     }
 
-    if (!permissionState.allPermissionsGranted) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(DashBackground),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(24.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.LocationOn,
-                    contentDescription = null,
-                    tint = Primary,
-                    modifier = Modifier.size(48.dp)
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = "Location Permission Required",
-                    fontFamily = Montserrat,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    color = DashTextPrimary
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "We need your location to find nearby mechanics",
-                    fontFamily = Roboto,
-                    fontSize = 13.sp,
-                    color = DashTextSecondary,
-                    modifier = Modifier.padding(horizontal = 16.dp)
-                )
-            }
+    LaunchedEffect(Unit) {
+        if (!permissionState.allPermissionsGranted) {
+            Log.d("MechanicMap", "Requesting permissions...")
+            permissionState.launchMultiplePermissionRequest()
         }
-        return
     }
 
     Scaffold(
@@ -156,60 +131,101 @@ fun MechanicMapScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // ✅ Google Map
-            if (userLocation != null) {
+            // ✅ Show Map if location available
+            if (hasPermission && userLocation != null && !isLoadingLocation) {
                 MechanicMapView(
                     userLocation = userLocation!!,
                     mechanics = (mechanicsState as? AuthResult.Success<*>)?.data as? List<Mechanic> ?: emptyList(),
-                    onMechanicClick = onMechanicClick
+                    onMechanicClick = onMechanicClick,
+                    modifier = Modifier.fillMaxSize()
                 )
             } else if (isLoadingLocation) {
+                // Loading state
                 Box(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(DashBackground),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(color = Primary)
-                }
-            }
-
-            // Mechanics List Overlay
-            when (mechanicsState) {
-                is AuthResult.Loading -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize(),
-                        contentAlignment = Alignment.Center
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        CircularProgressIndicator(color = Primary)
-                    }
-                }
-
-                is AuthResult.Success<*> -> {
-                    @Suppress("UNCHECKED_CAST")
-                    val mechanics = (mechanicsState as? AuthResult.Success<*>)?.data as? List<Mechanic> ?: emptyList()
-                    MechanicsListOverlay(
-                        mechanics = mechanics,
-                        onMechanicClick = onMechanicClick,
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .fillMaxWidth()
-                    )
-                }
-
-                is AuthResult.Error -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
+                        CircularProgressIndicator(color = Primary, modifier = Modifier.size(50.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = (mechanicsState as AuthResult.Error).message,
+                            text = "Getting your location...",
+                            fontFamily = Roboto,
+                            fontSize = 14.sp,
                             color = DashTextPrimary
                         )
                     }
                 }
+            } else if (!hasPermission) {
+                // Permission denied state
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(DashBackground),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterVertically as Alignment.Horizontal,
+                        modifier = Modifier.padding(24.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.LocationOn,
+                            contentDescription = null,
+                            tint = Primary,
+                            modifier = Modifier.size(48.dp)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Location Permission Required",
+                            fontFamily = Montserrat,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                            color = DashTextPrimary,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                        Text(
+                            text = "We need your location to find nearby mechanics",
+                            fontFamily = Roboto,
+                            fontSize = 13.sp,
+                            color = DashTextSecondary,
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        )
+                    }
+                }
+            }
 
-                else -> {}
+            // Mechanics List Overlay
+            if (hasPermission && userLocation != null) {
+                when (mechanicsState) {
+                    is AuthResult.Loading -> {
+                        // Show in overlay
+                    }
+
+                    is AuthResult.Success<*> -> {
+                        @Suppress("UNCHECKED_CAST")
+                        val mechanics = (mechanicsState as? AuthResult.Success<*>)?.data as? List<Mechanic> ?: emptyList()
+
+                        if (mechanics.isNotEmpty()) {
+                            MechanicsListOverlay(
+                                mechanics = mechanics,
+                                onMechanicClick = onMechanicClick,
+                                modifier = Modifier
+                                    .align(Alignment.BottomCenter)
+                                    .fillMaxWidth()
+                            )
+                        }
+                    }
+
+                    is AuthResult.Error -> {
+                        Log.e("MechanicMap", "Error: ${(mechanicsState as AuthResult.Error).message}")
+                    }
+
+                    else -> {}
+                }
             }
 
             // Header
@@ -223,9 +239,13 @@ fun MechanicMapScreen(
 private fun MechanicMapView(
     userLocation: Pair<Double, Double>,
     mechanics: List<Mechanic>,
-    onMechanicClick: (mechanicId: String, mechanicName: String) -> Unit
+    onMechanicClick: (mechanicId: String, mechanicName: String) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val userLatLng = LatLng(userLocation.first, userLocation.second)
+
+    Log.d("MechanicMapView", "Rendering map with location: $userLatLng")
+
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.Builder()
             .target(userLatLng)
@@ -234,7 +254,7 @@ private fun MechanicMapView(
     }
 
     GoogleMap(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier,
         cameraPositionState = cameraPositionState,
         properties = MapProperties(
             mapType = MapType.NORMAL
@@ -246,14 +266,13 @@ private fun MechanicMapView(
         )
     ) {
         // ✅ User Location Marker
-        // ✅ User Location Marker
         Marker(
             state = MarkerState(position = userLatLng),
             title = "Your Location",
             snippet = "You are here"
         )
 
-// ✅ Mechanic Markers
+        // ✅ Mechanic Markers
         mechanics.forEach { mechanic ->
             val mechanicLatLng = LatLng(mechanic.latitude, mechanic.longitude)
             Marker(
@@ -261,6 +280,7 @@ private fun MechanicMapView(
                 title = mechanic.name,
                 snippet = "⭐ ${String.format("%.1f", mechanic.rating)} • ${String.format("%.1f", mechanic.distance)}km",
                 onClick = {
+                    Log.d("MechanicMap", "Clicked on: ${mechanic.name}")
                     onMechanicClick(mechanic.id, mechanic.name)
                     true
                 }
