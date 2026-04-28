@@ -25,17 +25,20 @@ import com.example.fix_my_ride.ui.theme.*
 @Composable
 fun DashboardScreen(
     onNavigateToSpareParts : () -> Unit = {},
-    onNavigateToDetailing  : () -> Unit = {}
+    onNavigateToDetailing  : () -> Unit = {},
+    onNavigateToMechanicFinder: () -> Unit,  // ✅ ADD THIS
+
 ) {
 
     var selectedNav by remember { mutableIntStateOf(0) }
 
     val featureCards = listOf(
         FeatureCard(
-            "Roadside Help",
-            Icons.Default.Warning,
+            "Mechanic Finder",
+            Icons.Default.PersonSearch,
             IconYellow,
-            IconYellow.copy(alpha = 0.15f)
+            IconYellow.copy(alpha = 0.15f),
+            onClick = onNavigateToMechanicFinder
         ),
         FeatureCard("Spare Parts",   Icons.Default.Build,        IconRed,    IconRed.copy(alpha = 0.15f,),onClick   =onNavigateToSpareParts),
         FeatureCard("AI Assistant",  Icons.Default.SmartToy,     IconGreen,  IconGreen.copy(alpha = 0.15f), ),

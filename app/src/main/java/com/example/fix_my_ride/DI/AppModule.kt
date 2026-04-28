@@ -5,6 +5,9 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
+import com.example.fix_my_ride.Features.MechanicFinder.data.repository.MechanicRepositoryImpl
+import com.example.fix_my_ride.Features.MechanicFinder.data.source.MechanicFirebaseSource
+import com.example.fix_my_ride.Features.MechanicFinder.domain.repository.MechanicRepository
 import com.example.fix_my_ride.Features.SpareParts.Data.repository.SparePartsRepositoryImpl
 import com.example.fix_my_ride.Features.SpareParts.Domain.repository.SparePartsRepository
 import com.google.firebase.auth.FirebaseAuth
@@ -40,7 +43,28 @@ object AppModule {
         @ApplicationContext context: Context
     ): DataStore<Preferences> = context.dataStore
 
+    @Module
+    @InstallIn(SingletonComponent::class)
+    abstract class MechanicFinderModule {
 
+        // ✅ Bind interface to implementation
+        @Binds
+        @Singleton
+        abstract fun bindMechanicRepository(
+            repositoryImpl: MechanicRepositoryImpl
+        ): MechanicRepository
+    }
+
+    @Module
+    @InstallIn(SingletonComponent::class)
+    object MechanicFirebaseModule {
+
+        // ✅ Provide Firebase Source
+        @Provides
+        @Singleton
+        fun provideMechanicFirebaseSource(): MechanicFirebaseSource {
+            return MechanicFirebaseSource()
+        }
 
 
 
