@@ -43,31 +43,22 @@ object AppModule {
         @ApplicationContext context: Context
     ): DataStore<Preferences> = context.dataStore
 
-    @Module
-    @InstallIn(SingletonComponent::class)
-    abstract class MechanicFinderModule {
-
-        // ✅ Bind interface to implementation
-        @Binds
-        @Singleton
-        abstract fun bindMechanicRepository(
-            repositoryImpl: MechanicRepositoryImpl
-        ): MechanicRepository
+    @Provides
+    @Singleton
+    fun provideMechanicFirebaseSource(
+        firestore: FirebaseFirestore
+    ): MechanicFirebaseSource {
+        return MechanicFirebaseSource(firestore)
     }
+}
 
-    @Module
-    @InstallIn(SingletonComponent::class)
-    object MechanicFirebaseModule {
-
-        // ✅ Provide Firebase Source
-        @Provides
-        @Singleton
-        fun provideMechanicFirebaseSource(): MechanicFirebaseSource {
-            return MechanicFirebaseSource()
-        }
-
-
-
-
-
+// ✅ Separate module for MechanicRepository binding
+@Module
+@InstallIn(SingletonComponent::class)
+abstract class MechanicFinderModule {
+    @Binds
+    @Singleton
+    abstract fun bindMechanicRepository(
+        repositoryImpl: MechanicRepositoryImpl
+    ): MechanicRepository
 }

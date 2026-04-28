@@ -14,6 +14,8 @@ import com.example.fix_my_ride.Features.Detailing.domain.repository.BookingRepos
 import com.example.fix_my_ride.Features.Detailing.domain.repository.DetailingRepository
 import com.example.fix_my_ride.Features.Detailing.domain.repository.ReviewRepository
 import com.example.fix_my_ride.Features.Detailing.domain.repository.ShowcaseRepository
+import com.example.fix_my_ride.Features.MechanicFinder.data.repository.MechanicRepositoryImpl
+import com.example.fix_my_ride.Features.MechanicFinder.domain.repository.MechanicRepository
 import com.example.fix_my_ride.Features.SpareParts.Data.repository.SparePartsRepositoryImpl
 import com.example.fix_my_ride.Features.SpareParts.Domain.repository.SparePartsRepository
 import dagger.Binds
@@ -67,6 +69,9 @@ abstract class RepositoryModule {
     abstract fun bindChatRepository(
         impl: ChatRepositoryImpl
     ): ChatRepository
+
+
+
 
 
 
