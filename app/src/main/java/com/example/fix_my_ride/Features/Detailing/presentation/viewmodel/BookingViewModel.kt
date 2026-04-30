@@ -47,8 +47,11 @@ class BookingViewModel @Inject constructor(
     }
 
     fun onSlotSelect(slot: TimeSlot) {
+        android.util.Log.d("BOOKING", "onSlotSelect called: ${slot.time}, available: ${slot.isAvailable}")
         if (slot.isAvailable) {
             _selectedSlot.value = slot
+            android.util.Log.d("BOOKING", "✅ Slot set: ${slot.time}")
+
         }
     }
 
@@ -61,6 +64,22 @@ class BookingViewModel @Inject constructor(
     ) {
         val slot = _selectedSlot.value ?: return
         val date = _selectedDate.value
+
+
+        android.util.Log.d("BOOKING", "=== createBooking called ===")
+        android.util.Log.d("BOOKING", "slot: $slot")
+        android.util.Log.d("BOOKING", "date: $date")
+        android.util.Log.d("BOOKING", "packageId: $packageId")
+
+        if (slot == null) {
+            android.util.Log.d("BOOKING", "❌ SLOT NULL — function return ho gaya")
+            return
+        }
+        if (date.isBlank()) {
+            android.util.Log.d("BOOKING", "❌ DATE EMPTY — return ho gaya")
+            return
+        }
+
 
         viewModelScope.launch {
             _bookingState.value = AuthResult.Loading

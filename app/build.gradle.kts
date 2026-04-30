@@ -79,6 +79,9 @@ dependencies {
     implementation(libs.google.firebase.firestore)
     implementation(libs.google.firebase.database)
     implementation(libs.androidx.datastore.core)
+    implementation(libs.firebase.inappmessaging.display)
+    implementation(libs.androidx.animation)
+    implementation(libs.androidx.foundation.layout)
     ksp("com.google.dagger:hilt-compiler:2.51.1")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
 

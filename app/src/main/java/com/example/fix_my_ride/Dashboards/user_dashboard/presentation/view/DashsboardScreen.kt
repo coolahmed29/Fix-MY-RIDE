@@ -26,7 +26,7 @@ import com.example.fix_my_ride.ui.theme.*
 fun DashboardScreen(
     onNavigateToSpareParts : () -> Unit = {},
     onNavigateToDetailing  : () -> Unit = {},
-    onNavigateToMechanicFinder: () -> Unit,  // ✅ ADD THIS
+    onNavigateToMechanicFinder: () -> Unit,
 
 ) {
 

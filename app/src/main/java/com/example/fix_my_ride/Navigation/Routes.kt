@@ -19,6 +19,9 @@ import kotlinx.serialization.Serializable
 @Serializable data object BookingConfirmScreen
 @Serializable data object ReviewScreen
 
+@Serializable data object WorkshopDashboard
+
+
 // ── Chatting ─────────────────────────────────────────
 @Serializable
 data class ChatScreen(
@@ -45,3 +48,20 @@ data class ServiceRequestScreenRoute(val mechanicId: String)
 
 @Serializable
 data class LiveTrackingScreenRoute(val requestId: String)
+
+
+@Serializable
+data object CheckoutScreenRoute // Jahan user details dalega
+
+@Serializable
+data object OrderSuccessScreenRoute // Success confirmation screen
+
+@Serializable
+data object  VendorDashboard
+
+@Serializable
+data object  MechanicDashboard
+
+// ── Role Selection ────────────────────────────────────
+@Serializable
+data object RoleSelectionScreen

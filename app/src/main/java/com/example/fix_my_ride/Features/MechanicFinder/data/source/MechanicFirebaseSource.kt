@@ -10,7 +10,9 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import kotlin.math.*
+import android.util.Log
 
+// FIX: @Inject constructor add kiya taake Hilt properly inject kar sake
 class MechanicFirebaseSource @Inject constructor(
     private val firestore: FirebaseFirestore
 ) {
@@ -18,229 +20,345 @@ class MechanicFirebaseSource @Inject constructor(
     private val mechanicsCollection = "mechanics"
     private val serviceRequestsCollection = "service_requests"
 
-    // Get nearby mechanics
+    // ── Get Nearby Mechanics ───────────────────────
     suspend fun getNearbyMechanics(
         latitude: Double,
         longitude: Double,
-        radiusKm: Double = 10.0
+        radiusKm: Double
     ): List<MechanicDto> {
         return try {
-            val allMechanics = firestore.collection(mechanicsCollection)
+            Log.d("MechanicFirebaseSource", "Fetching mechanics from Firestore...")
+
+            val snapshot = firestore.collection(mechanicsCollection)
                 .get()
                 .await()
-                .toObjects(MechanicDto::class.java)
 
-            // Filter by distance
-            allMechanics.filter { mechanic ->
-                calculateDistance(latitude, longitude, mechanic.latitude, mechanic.longitude) <= radiusKm
-            }.map { mechanic ->
-                mechanic.copy(
-                    distance = calculateDistance(latitude, longitude, mechanic.latitude, mechanic.longitude)
-                )
-            }.sortedBy { it.distance }
+            Log.d("MechanicFirebaseSource", "Total docs fetched: ${snapshot.size()}")
+
+            snapshot.documents.mapNotNull { doc ->
+                try {
+                    val dto = doc.toObject(MechanicDto::class.java) ?: return@mapNotNull null
+
+                    // FIX: mechanic ki lat/lon null ho toh skip karo, user location use mat karo
+                    val mechLat = dto.latitude ?: run {
+                        Log.w("MechanicFirebaseSource", "Skipping ${doc.id}: latitude missing")
+                        return@mapNotNull null
+                    }
+                    val mechLon = dto.longitude ?: run {
+                        Log.w("MechanicFirebaseSource", "Skipping ${doc.id}: longitude missing")
+                        return@mapNotNull null
+                    }
+
+                    val distance = calculateDistance(mechLat, mechLon, latitude, longitude)
+
+                    if (distance <= radiusKm) dto.copy(distance = distance) else null
+                } catch (e: Exception) {
+                    Log.e("MechanicFirebaseSource", "Error parsing doc ${doc.id}: ${e.message}")
+                    null
+                }
+            }
         } catch (e: Exception) {
+            Log.e("MechanicFirebaseSource", "getNearbyMechanics error: ${e.message}", e)
             emptyList()
         }
     }
 
-    // Get mechanic by ID
+    // ── Get Mechanic Profile ───────────────────────
     suspend fun getMechanicProfile(mechanicId: String): MechanicDto? {
         return try {
-            firestore.collection(mechanicsCollection)
+            Log.d("MechanicFirebaseSource", "Fetching profile for: $mechanicId")
+
+            val snapshot = firestore.collection(mechanicsCollection)
                 .document(mechanicId)
                 .get()
                 .await()
-                .toObject(MechanicDto::class.java)
+
+            if (!snapshot.exists()) {
+                Log.w("MechanicFirebaseSource", "No document found for: $mechanicId")
+                return null
+            }
+
+            val dto = snapshot.toObject(MechanicDto::class.java)
+            Log.d("MechanicFirebaseSource", "Profile fetched: ${dto?.name}")
+            dto
         } catch (e: Exception) {
+            Log.e("MechanicFirebaseSource", "getMechanicProfile error: ${e.message}", e)
             null
         }
     }
 
-    // Send service request
+    // ── Send Service Request ────────────────────────
     suspend fun sendServiceRequest(serviceRequest: ServiceRequestDto): ServiceRequestDto? {
         return try {
-            val docRef = firestore.collection(serviceRequestsCollection).document()
-            val requestWithId = serviceRequest.copy(id = docRef.id)
-            docRef.set(requestWithId).await()
-            requestWithId
+            Log.d("MechanicFirebaseSource", "Saving service request: ${serviceRequest.id}")
+
+            val docRef = firestore.collection(serviceRequestsCollection)
+                .document(serviceRequest.id)
+
+            docRef.set(serviceRequest).await()
+            Log.d("MechanicFirebaseSource", "Request saved: ${serviceRequest.id}")
+
+            // Saved object wapas fetch karo confirm karne ke liye
+            docRef.get().await().toObject(ServiceRequestDto::class.java)
         } catch (e: Exception) {
+            Log.e("MechanicFirebaseSource", "sendServiceRequest error: ${e.message}", e)
             null
         }
     }
 
-    // Get user's service requests
+    // ── Get User Service Requests ───────────────────
     suspend fun getUserServiceRequests(userId: String): List<ServiceRequestDto> {
         return try {
-            firestore.collection(serviceRequestsCollection)
+            Log.d("MechanicFirebaseSource", "Fetching requests for user: $userId")
+
+            val snapshot = firestore.collection(serviceRequestsCollection)
                 .whereEqualTo("user_id", userId)
                 .get()
                 .await()
-                .toObjects(ServiceRequestDto::class.java)
+
+            snapshot.documents.mapNotNull { doc ->
+                doc.toObject(ServiceRequestDto::class.java)
+            }
         } catch (e: Exception) {
+            Log.e("MechanicFirebaseSource", "getUserServiceRequests error: ${e.message}", e)
             emptyList()
         }
     }
 
-    // Get specific service request
+    // ── Get Service Request ─────────────────────────
     suspend fun getServiceRequest(requestId: String): ServiceRequestDto? {
         return try {
-            firestore.collection(serviceRequestsCollection)
+            Log.d("MechanicFirebaseSource", "Fetching request: $requestId")
+
+            val snapshot = firestore.collection(serviceRequestsCollection)
                 .document(requestId)
                 .get()
                 .await()
-                .toObject(ServiceRequestDto::class.java)
+
+            if (!snapshot.exists()) {
+                Log.w("MechanicFirebaseSource", "Request not found: $requestId")
+                return null
+            }
+
+            snapshot.toObject(ServiceRequestDto::class.java)
         } catch (e: Exception) {
+            Log.e("MechanicFirebaseSource", "getServiceRequest error: ${e.message}", e)
             null
         }
     }
 
-    // Update service request status
-    suspend fun updateServiceRequestStatus(
-        requestId: String,
-        status: String
-    ): Boolean {
+    // ── Update Service Request Status ───────────────
+    suspend fun updateServiceRequestStatus(requestId: String, status: String): Boolean {
         return try {
+            Log.d("MechanicFirebaseSource", "Updating status: $requestId -> $status")
+
             firestore.collection(serviceRequestsCollection)
                 .document(requestId)
                 .update("status", status)
                 .await()
+
+            Log.d("MechanicFirebaseSource", "Status updated successfully")
             true
         } catch (e: Exception) {
+            Log.e("MechanicFirebaseSource", "updateServiceRequestStatus error: ${e.message}", e)
             false
         }
     }
 
-    // Update mechanic availability
-    suspend fun updateMechanicAvailability(
-        mechanicId: String,
-        isAvailable: Boolean
-    ): Boolean {
+    // ── Update Mechanic Availability ────────────────
+    suspend fun updateMechanicAvailability(mechanicId: String, isAvailable: Boolean): Boolean {
         return try {
+            Log.d("MechanicFirebaseSource", "Updating availability: $mechanicId -> $isAvailable")
+
             firestore.collection(mechanicsCollection)
                 .document(mechanicId)
                 .update("is_available", isAvailable)
                 .await()
+
             true
         } catch (e: Exception) {
+            Log.e("MechanicFirebaseSource", "updateMechanicAvailability error: ${e.message}", e)
             false
         }
     }
 
-    // Track mechanic location in real-time
+    // ── Track Mechanic Location ─────────────────────
     fun trackMechanicLocation(mechanicId: String): Flow<Pair<Double, Double>?> = callbackFlow {
+        Log.d("MechanicFirebaseSource", "Starting location tracking for: $mechanicId")
+
         val listener = firestore.collection(mechanicsCollection)
             .document(mechanicId)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
+                    Log.e("MechanicFirebaseSource", "Location tracking error: ${error.message}")
                     close(error)
                     return@addSnapshotListener
                 }
 
                 if (snapshot != null && snapshot.exists()) {
-                    val mechanic = snapshot.toObject(MechanicDto::class.java)
-                    if (mechanic != null) {
-                        trySend(Pair(mechanic.latitude, mechanic.longitude))
+                    try {
+                        // FIX: null check properly karo, 0.0 default silently pass hoti thi
+                        val lat = snapshot.getDouble("latitude")
+                        val lon = snapshot.getDouble("longitude")
+
+                        if (lat != null && lon != null) {
+                            Log.d("MechanicFirebaseSource", "Location update: $lat, $lon")
+                            trySend(Pair(lat, lon))
+                        } else {
+                            Log.w("MechanicFirebaseSource", "Location fields missing for: $mechanicId")
+                            trySend(null)
+                        }
+                    } catch (e: Exception) {
+                        Log.e("MechanicFirebaseSource", "Error parsing location: ${e.message}")
+                        trySend(null)
                     }
+                } else {
+                    Log.w("MechanicFirebaseSource", "Snapshot missing or doesn't exist")
+                    trySend(null)
                 }
             }
 
         awaitClose {
+            Log.d("MechanicFirebaseSource", "Stopping location tracking for: $mechanicId")
             listener.remove()
         }
     }
 
-    // Cancel service request
+    // ── Cancel Service Request ──────────────────────
+    // FIX: delete ki bajaye status "cancelled" set karo — history preserve hoti hai
     suspend fun cancelServiceRequest(requestId: String): Boolean {
         return try {
+            Log.d("MechanicFirebaseSource", "Cancelling request: $requestId")
+
             firestore.collection(serviceRequestsCollection)
                 .document(requestId)
-                .update("status", "CANCELLED")
+                .update(
+                    mapOf(
+                        "status" to "cancelled",
+                        "cancelled_at" to System.currentTimeMillis()
+                    )
+                )
                 .await()
+
+            Log.d("MechanicFirebaseSource", "Request cancelled: $requestId")
             true
         } catch (e: Exception) {
+            Log.e("MechanicFirebaseSource", "cancelServiceRequest error: ${e.message}", e)
             false
         }
     }
 
-    // Rate mechanic
-    suspend fun rateMechanic(
-        requestId: String,
-        rating: Double,
-        feedback: String
-    ): Boolean {
+    // ── Rate Mechanic ───────────────────────────────
+    suspend fun rateMechanic(requestId: String, rating: Double, feedback: String): Boolean {
         return try {
+            Log.d("MechanicFirebaseSource", "Rating mechanic for request: $requestId, rating: $rating")
+
             firestore.collection(serviceRequestsCollection)
                 .document(requestId)
                 .update(
                     mapOf(
                         "rating" to rating,
                         "feedback" to feedback,
-                        "status" to "COMPLETED"
+                        "rated_at" to System.currentTimeMillis()
                     )
                 )
                 .await()
+
             true
         } catch (e: Exception) {
+            Log.e("MechanicFirebaseSource", "rateMechanic error: ${e.message}", e)
             false
         }
     }
 
-    // Get mechanics by service type
+    // ── Get Mechanics by Service Type ───────────────
     suspend fun getMechanicsByServiceType(
         serviceType: String,
         latitude: Double,
         longitude: Double,
-        radiusKm: Double = 10.0
+        radiusKm: Double
     ): List<MechanicDto> {
         return try {
-            val allMechanics = firestore.collection(mechanicsCollection)
+            Log.d("MechanicFirebaseSource", "Fetching mechanics for service: $serviceType")
+
+            val snapshot = firestore.collection(mechanicsCollection)
                 .get()
                 .await()
-                .toObjects(MechanicDto::class.java)
 
-            allMechanics.filter { mechanic ->
-                mechanic.specializations.contains(serviceType) &&
-                        calculateDistance(latitude, longitude, mechanic.latitude, mechanic.longitude) <= radiusKm
-            }.map { mechanic ->
-                mechanic.copy(
-                    distance = calculateDistance(latitude, longitude, mechanic.latitude, mechanic.longitude)
-                )
-            }.sortedBy { it.distance }
+            snapshot.documents.mapNotNull { doc ->
+                try {
+                    val dto = doc.toObject(MechanicDto::class.java) ?: return@mapNotNull null
+
+                    // FIX: null lat/lon skip karo
+                    val mechLat = dto.latitude ?: return@mapNotNull null
+                    val mechLon = dto.longitude ?: return@mapNotNull null
+
+                    val hasService = dto.specializations?.any {
+                        it.equals(serviceType, ignoreCase = true)
+                    } ?: false
+
+                    val distance = calculateDistance(mechLat, mechLon, latitude, longitude)
+
+                    if (hasService && distance <= radiusKm) dto.copy(distance = distance) else null
+                } catch (e: Exception) {
+                    Log.e("MechanicFirebaseSource", "Error parsing doc ${doc.id}: ${e.message}")
+                    null
+                }
+            }
         } catch (e: Exception) {
+            Log.e("MechanicFirebaseSource", "getMechanicsByServiceType error: ${e.message}", e)
             emptyList()
         }
     }
 
-    // Search mechanics by name
+    // ── Search Mechanics ────────────────────────────
+    // FIX: specializations bhi search mein include kiya
     suspend fun searchMechanics(query: String): List<MechanicDto> {
         return try {
-            firestore.collection(mechanicsCollection)
+            Log.d("MechanicFirebaseSource", "Searching mechanics: '$query'")
+
+            val snapshot = firestore.collection(mechanicsCollection)
                 .get()
                 .await()
-                .toObjects(MechanicDto::class.java)
-                .filter { mechanic ->
-                    mechanic.name.contains(query, ignoreCase = true) ||
-                            mechanic.workshopName?.contains(query, ignoreCase = true) == true
+
+            val lowerQuery = query.lowercase()
+
+            snapshot.documents.mapNotNull { doc ->
+                try {
+                    val dto = doc.toObject(MechanicDto::class.java) ?: return@mapNotNull null
+
+                    val matchesName = dto.name?.lowercase()?.contains(lowerQuery) ?: false
+                    val matchesAddress = dto.workshop_address?.lowercase()?.contains(lowerQuery) ?: false
+                    // FIX: specializations bhi match karo
+                    val matchesSpecialization = dto.specializations?.any {
+                        it.lowercase().contains(lowerQuery)
+                    } ?: false
+
+                    if (matchesName || matchesAddress || matchesSpecialization) dto else null
+                } catch (e: Exception) {
+                    Log.e("MechanicFirebaseSource", "Error parsing doc ${doc.id}: ${e.message}")
+                    null
                 }
+            }
         } catch (e: Exception) {
+            Log.e("MechanicFirebaseSource", "searchMechanics error: ${e.message}", e)
             emptyList()
         }
     }
 
-    // Helper function to calculate distance between two coordinates
+    // ── Helper: Calculate Distance (Haversine) ──────
     private fun calculateDistance(
-        lat1: Double,
-        lon1: Double,
-        lat2: Double,
-        lon2: Double
+        lat1: Double, lon1: Double,
+        lat2: Double, lon2: Double
     ): Double {
-        val r = 6371 // Earth's radius in km
+        val r = 6371.0
         val dLat = Math.toRadians(lat2 - lat1)
         val dLon = Math.toRadians(lon2 - lon1)
-        val a = sin(dLat / 2) * sin(dLat / 2) +
+
+        val a = sin(dLat / 2).pow(2) +
                 cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
-                sin(dLon / 2) * sin(dLon / 2)
-        val c = 2 * asin(sqrt(a))
-        return r * c
+                sin(dLon / 2).pow(2)
+
+        return r * 2 * asin(sqrt(a))
     }
 }

@@ -28,6 +28,14 @@ class SparePartsViewModel @Inject constructor(
     private val getVendorsForPartUseCase : GetVendorsForPartUseCase
 ) : ViewModel() {
 
+    // ViewModel ke andar ye add karein
+    private val _selectedVendor = MutableStateFlow<Vendor?>(null)
+    val selectedVendor = _selectedVendor.asStateFlow()
+
+    fun onVendorSelect(vendor: Vendor) {
+        _selectedVendor.value = vendor
+    }
+
     // ── Search Query ──────────────────────────────────
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()

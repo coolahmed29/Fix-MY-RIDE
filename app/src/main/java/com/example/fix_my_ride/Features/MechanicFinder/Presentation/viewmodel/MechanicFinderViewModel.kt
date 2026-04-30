@@ -4,8 +4,8 @@ package com.example.fix_my_ride.Features.MechanicFinder.Presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.fix_my_ride.Features.MechanicFinder.domain.model.Mechanic
+import com.example.fix_my_ride.Features.MechanicFinder.domain.model.MechanicReview
 import com.example.fix_my_ride.Features.MechanicFinder.domain.model.ServiceRequest
-import com.example.fix_my_ride.Features.MechanicFinder.domain.model.RequestStatus
 import com.example.fix_my_ride.Features.MechanicFinder.domain.usecase.GetNearbyMechanicsUseCase
 import com.example.fix_my_ride.Features.MechanicFinder.domain.usecase.SendServiceRequestUseCase
 import com.example.fix_my_ride.Features.MechanicFinder.domain.usecase.GetMechanicProfileUseCase
@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import android.util.Log
 
 @HiltViewModel
 class MechanicFinderViewModel @Inject constructor(
@@ -28,35 +29,29 @@ class MechanicFinderViewModel @Inject constructor(
     private val trackMechanicLocationUseCase: TrackMechanicLocationUseCase
 ) : ViewModel() {
 
-    // Nearby mechanics state
+    // ── State Flows ────────────────────────────────
     private val _nearbyMechanicsState = MutableStateFlow<AuthResult<*>?>(null)
     val nearbyMechanicsState: StateFlow<AuthResult<*>?> = _nearbyMechanicsState.asStateFlow()
 
-    // Selected mechanic state
     private val _selectedMechanic = MutableStateFlow<Mechanic?>(null)
     val selectedMechanic: StateFlow<Mechanic?> = _selectedMechanic.asStateFlow()
 
-    // Mechanic profile state
     private val _mechanicProfileState = MutableStateFlow<AuthResult<*>?>(null)
     val mechanicProfileState: StateFlow<AuthResult<*>?> = _mechanicProfileState.asStateFlow()
 
-    // Service request state
     private val _serviceRequestState = MutableStateFlow<AuthResult<*>?>(null)
     val serviceRequestState: StateFlow<AuthResult<*>?> = _serviceRequestState.asStateFlow()
 
-    // Mechanic location tracking state
     private val _mechanicLocationState = MutableStateFlow<AuthResult<*>?>(null)
     val mechanicLocationState: StateFlow<AuthResult<*>?> = _mechanicLocationState.asStateFlow()
 
-    // Loading state
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
-    // Error state
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
-    // ── Fetch Nearby Mechanics ─────────────────────
+    // ── Fetch Nearby Mechanics from Firebase ───────
     fun fetchNearbyMechanics(
         latitude: Double,
         longitude: Double,
@@ -64,91 +59,227 @@ class MechanicFinderViewModel @Inject constructor(
     ) {
         viewModelScope.launch {
             _isLoading.value = true
-            _nearbyMechanicsState.value = AuthResult.Loading // ✅ یہ line check کریں
+            _nearbyMechanicsState.value = AuthResult.Loading
 
-            val result = getNearbyMechanicsUseCase(latitude, longitude, radiusKm)
-            _nearbyMechanicsState.value = result
+            Log.d("MechanicViewModel", "Fetching mechanics at: $latitude, $longitude with radius: ${radiusKm}km")
 
-            if (result is AuthResult.Error) {
-                _errorMessage.value = result.message
+            try {
+                // ✅ Firebase سے actual data لیں
+                val result = getNearbyMechanicsUseCase(latitude, longitude, radiusKm)
+
+                when (result) {
+                    is AuthResult.Success<*> -> {
+                        val mechanics = result.data as? List<Mechanic> ?: emptyList()
+                        Log.d("MechanicViewModel", "✅ Found ${mechanics.size} mechanics")
+
+                        if (mechanics.isEmpty()) {
+                            Log.w("MechanicViewModel", "No mechanics found, but use case succeeded")
+                            _errorMessage.value = "No mechanics available in your area"
+                        }
+
+                        _nearbyMechanicsState.value = result
+                    }
+
+                    is AuthResult.Error -> {
+                        Log.e("MechanicViewModel", "❌ Error: ${result.message}")
+                        _errorMessage.value = result.message
+                        _nearbyMechanicsState.value = result
+                    }
+
+                    is AuthResult.Loading -> {
+                        // Already set above
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("MechanicViewModel", "❌ Exception: ${e.message}", e)
+                val error = AuthResult.Error(e.message ?: "Unknown error")
+                _nearbyMechanicsState.value = error
+                _errorMessage.value = e.message
             }
+
             _isLoading.value = false
         }
     }
 
-    // ── Get Mechanic Profile ──────────────────────
+    // ── Get Mechanic Profile from Firebase ──────────
     fun getMechanicProfile(mechanicId: String) {
         viewModelScope.launch {
             _isLoading.value = true
-            _mechanicProfileState.value = AuthResult.Loading // ✅ یہ line بھی
+            _mechanicProfileState.value = AuthResult.Loading
 
-            val result = getMechanicProfileUseCase(mechanicId)
-            _mechanicProfileState.value = result
+            Log.d("MechanicViewModel", "Fetching profile for mechanic: $mechanicId")
 
-            if (result is AuthResult.Success<*>) {
-                _selectedMechanic.value = result.data as? Mechanic
-            } else if (result is AuthResult.Error) {
-                _errorMessage.value = result.message
+            try {
+                // ✅ Firebase سے actual profile لیں
+                val result = getMechanicProfileUseCase(mechanicId)
+
+                when (result) {
+                    is AuthResult.Success<*> -> {
+                        val mechanic = result.data as? Mechanic
+                        Log.d("MechanicViewModel", "✅ Profile loaded: ${mechanic?.name}")
+                        _selectedMechanic.value = mechanic
+                        _mechanicProfileState.value = result
+                    }
+
+                    is AuthResult.Error -> {
+                        Log.e("MechanicViewModel", "❌ Error: ${result.message}")
+                        _errorMessage.value = result.message
+                        _mechanicProfileState.value = result
+                    }
+
+                    is AuthResult.Loading -> {
+                        // Already set above
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("MechanicViewModel", "❌ Exception: ${e.message}", e)
+                val error = AuthResult.Error(e.message ?: "Unknown error")
+                _mechanicProfileState.value = error
+                _errorMessage.value = e.message
             }
+
             _isLoading.value = false
         }
     }
 
-    // ── Send Service Request ──────────────────────
+    // ── Send Service Request ────────────────────────
     fun sendServiceRequest(serviceRequest: ServiceRequest) {
         viewModelScope.launch {
             _isLoading.value = true
-            _serviceRequestState.value = AuthResult.Loading // ✅ یہ line بھی
+            _serviceRequestState.value = AuthResult.Loading
 
-            val result = sendServiceRequestUseCase(serviceRequest)
-            _serviceRequestState.value = result
+            Log.d("MechanicViewModel", "Sending service request for mechanic: ${serviceRequest.mechanicId}")
 
-            if (result is AuthResult.Error) {
-                _errorMessage.value = result.message
+            try {
+                // ✅ Firebase میں request save کریں
+                val result = sendServiceRequestUseCase(serviceRequest)
+
+                when (result) {
+                    is AuthResult.Success<*> -> {
+                        val request = result.data as? ServiceRequest
+                        Log.d("MechanicViewModel", "✅ Request sent: ${request?.id}")
+                        _serviceRequestState.value = result
+                    }
+
+                    is AuthResult.Error -> {
+                        Log.e("MechanicViewModel", "❌ Error: ${result.message}")
+                        _errorMessage.value = result.message
+                        _serviceRequestState.value = result
+                    }
+
+                    is AuthResult.Loading -> {
+                        // Already set above
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("MechanicViewModel", "❌ Exception: ${e.message}", e)
+                val error = AuthResult.Error(e.message ?: "Failed to send request")
+                _serviceRequestState.value = error
+                _errorMessage.value = e.message
             }
+
             _isLoading.value = false
         }
     }
 
-    // ── Track Mechanic Location ────────────────────
+    // ── Track Mechanic Location ─────────────────────
     fun trackMechanicLocation(mechanicId: String) {
         viewModelScope.launch {
-            trackMechanicLocationUseCase(mechanicId).collect { result ->
-                _mechanicLocationState.value = result
+            Log.d("MechanicViewModel", "Starting location tracking for: $mechanicId")
+
+            try {
+                trackMechanicLocationUseCase(mechanicId).collect { result ->
+                    when (result) {
+                        is AuthResult.Success<*> -> {
+                            val location = result.data as? Pair<Double, Double>
+                            Log.d("MechanicViewModel", "📍 Location updated: $location")
+                            _mechanicLocationState.value = result
+                        }
+
+                        is AuthResult.Error -> {
+                            Log.e("MechanicViewModel", "❌ Tracking error: ${result.message}")
+                            _mechanicLocationState.value = result
+                        }
+
+                        is AuthResult.Loading -> {
+                            Log.d("MechanicViewModel", "Tracking in progress...")
+                            _mechanicLocationState.value = result
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("MechanicViewModel", "❌ Tracking exception: ${e.message}", e)
+                _mechanicLocationState.value = AuthResult.Error(e.message ?: "Tracking failed")
             }
         }
     }
 
-    // ── Update Mechanic Availability ──────────────
+    // ── Update Mechanic Availability ────────────────
     fun updateMechanicAvailability(mechanicId: String, isAvailable: Boolean) {
         viewModelScope.launch {
             _isLoading.value = true
-            val result = updateAvailabilityUseCase(mechanicId, isAvailable)
 
-            if (result is AuthResult.Error) {
-                _errorMessage.value = result.message
+            Log.d("MechanicViewModel", "Updating availability for $mechanicId: $isAvailable")
+
+            try {
+                val result = updateAvailabilityUseCase(mechanicId, isAvailable)
+
+                when (result) {
+                    is AuthResult.Success<*> -> {
+                        Log.d("MechanicViewModel", "✅ Availability updated")
+                    }
+
+                    is AuthResult.Error -> {
+                        Log.e("MechanicViewModel", "❌ Error: ${result.message}")
+                        _errorMessage.value = result.message
+                    }
+
+                    is AuthResult.Loading -> {
+                        // In progress
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("MechanicViewModel", "❌ Exception: ${e.message}")
+                _errorMessage.value = e.message
             }
+
             _isLoading.value = false
         }
     }
 
     // ── Select Mechanic ────────────────────────────
     fun onMechanicSelect(mechanic: Mechanic) {
+        Log.d("MechanicViewModel", "Mechanic selected: ${mechanic.name}")
         _selectedMechanic.value = mechanic
     }
 
-    // ── Clear Error Message ────────────────────────
+    // ── Clear Error Message ─────────────────────────
     fun clearErrorMessage() {
         _errorMessage.value = null
     }
 
-    // ── Clear Selected Mechanic ────────────────────
+    // ── Clear Selected Mechanic ─────────────────────
     fun clearSelectedMechanic() {
         _selectedMechanic.value = null
     }
 
-    // ── Reset Service Request State ────────────────
+    // ── Reset Service Request State ─────────────────
     fun resetServiceRequestState() {
         _serviceRequestState.value = null
+    }
+
+    // ── Reset Mechanic Profile State ────────────────
+    fun resetMechanicProfileState() {
+        _mechanicProfileState.value = null
+    }
+
+    // ── Reset All States ────────────────────────────
+    fun resetAllStates() {
+        _nearbyMechanicsState.value = null
+        _selectedMechanic.value = null
+        _mechanicProfileState.value = null
+        _serviceRequestState.value = null
+        _mechanicLocationState.value = null
+        _errorMessage.value = null
     }
 }

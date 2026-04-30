@@ -1,5 +1,6 @@
 package com.example.fix_my_ride.Features.SpareParts.Presentation.view
 
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -31,6 +32,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,6 +48,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.fix_my_ride.Features.Authentication.Domain.model.AuthResult
 import com.example.fix_my_ride.Features.SpareParts.Domain.model.Part
 import com.example.fix_my_ride.Features.SpareParts.Domain.model.Vendor
+import com.example.fix_my_ride.Features.SpareParts.Presentation.view.CheckoutScreen
 import com.example.fix_my_ride.Features.SpareParts.Presentation.viewmodel.SparePartsViewModel
 import com.example.fix_my_ride.ui.Components.EmptyState
 import com.example.fix_my_ride.ui.Components.VendorCard
@@ -60,16 +65,33 @@ import com.example.fix_my_ride.ui.theme.Roboto
 fun PartDetailScreen(
     part        : Part,
     onBack      : () -> Unit,
-    onChatClick : (vendorId: String, vendorName: String) -> Unit,  // ✅ lambda
+    onBuyNow    : (Vendor) -> Unit,   // ✅ yeh add karo
+    onChatClick : (vendorId: String, vendorName: String) -> Unit,
     viewModel   : SparePartsViewModel = hiltViewModel()
+
 ) {
     val vendorsState by viewModel.vendorsState
         .collectAsStateWithLifecycle()
+
+    // ── Checkout state — koi navigation nahi, bas yeh ek variable ──────────
+    var selectedVendor by remember { mutableStateOf<Vendor?>(null) }
 
     LaunchedEffect(part.id) {
         viewModel.onPartSelect(part)
     }
 
+    // ── Agar vendor select ho gaya toh CheckoutScreen dikhao ───────────────
+    selectedVendor?.let { vendor ->
+        CheckoutScreen(
+            part     = part,
+            vendor   = vendor,
+            onBack   = { selectedVendor = null },   // wapas vendors list
+            onFinish = { selectedVendor = null }    // order ke baad bhi wapas
+        )
+        return  // baaki screen render na ho
+    }
+
+    // ── Normal PartDetailScreen ─────────────────────────────────────────────
     Scaffold(
         containerColor = DashBackground
     ) { paddingValues ->
@@ -93,19 +115,20 @@ fun PartDetailScreen(
                 )
             }
 
-            // ✅ onChatClick pass karo
             vendorsSection(
-                vendorsState = vendorsState,
-                onChatClick  = onChatClick
+                vendorsState      = vendorsState,
+                onChatClick       = onChatClick,
+                onBuyNowClick     =  onBuyNow   // ✅ sirf yeh
             )
         }
     }
 }
 
-// ── Vendors Section ───────────────────────────────────
+// ── Vendors Section ───────────────────────────────────────────────────────────
 private fun LazyListScope.vendorsSection(
-    vendorsState : AuthResult<*>?,
-    onChatClick  : (vendorId: String, vendorName: String) -> Unit  // ✅ lambda
+    vendorsState  : AuthResult<*>?,
+    onChatClick   : (vendorId: String, vendorName: String) -> Unit,
+    onBuyNowClick : (Vendor) -> Unit
 ) {
     item(key = "vendors_header") {
         Row(
@@ -149,7 +172,9 @@ private fun LazyListScope.vendorsSection(
         is AuthResult.Loading -> {
             item(key = "loading") {
                 Box(
-                    modifier         = Modifier.fillMaxWidth().padding(40.dp),
+                    modifier         = Modifier
+                        .fillMaxWidth()
+                        .padding(40.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator(color = Primary, modifier = Modifier.size(32.dp))
@@ -191,11 +216,8 @@ private fun LazyListScope.vendorsSection(
                 items(items = vendors, key = { it.id }) { vendor ->
                     VendorCard(
                         vendor   = vendor,
-                        onBuyNow = { /* TODO: Payment */ },
-                        onChat   = {
-                            // ✅ navController ki zaroorat nahi — lambda call karo
-                            onChatClick(vendor.id, vendor.name)
-                        },
+                        onBuyNow = { onBuyNowClick(vendor) },   // ✅ yahan sirf yeh
+                        onChat   = { onChatClick(vendor.id, vendor.name) },
                         modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp)
                     )
                 }
@@ -205,7 +227,9 @@ private fun LazyListScope.vendorsSection(
         null -> {
             item(key = "null_state") {
                 Box(
-                    modifier         = Modifier.fillMaxWidth().padding(40.dp),
+                    modifier         = Modifier
+                        .fillMaxWidth()
+                        .padding(40.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator(color = Primary, modifier = Modifier.size(32.dp))
@@ -215,7 +239,7 @@ private fun LazyListScope.vendorsSection(
     }
 }
 
-// ── Header ────────────────────────────────────────────
+// ── Header ────────────────────────────────────────────────────────────────────
 @Composable
 private fun PartDetailHeader(
     part   : Part,
@@ -265,7 +289,7 @@ private fun PartDetailHeader(
     }
 }
 
-// ── Part Info Card ────────────────────────────────────
+// ── Part Info Card ────────────────────────────────────────────────────────────
 @Composable
 private fun PartInfoCard(
     part     : Part,
@@ -274,7 +298,11 @@ private fun PartInfoCard(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .shadow(elevation = 4.dp, shape = RoundedCornerShape(16.dp), ambientColor = Color.Black.copy(alpha = 0.04f))
+            .shadow(
+                elevation    = 4.dp,
+                shape        = RoundedCornerShape(16.dp),
+                ambientColor = Color.Black.copy(alpha = 0.04f)
+            )
             .clip(RoundedCornerShape(16.dp))
             .background(DashCardBg)
     ) {
@@ -353,7 +381,7 @@ private fun PartInfoCard(
     }
 }
 
-// ── Stat Item ─────────────────────────────────────────
+// ── Stat Item ─────────────────────────────────────────────────────────────────
 @Composable
 private fun StatItem(label: String, value: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -373,7 +401,7 @@ private fun StatItem(label: String, value: String) {
     }
 }
 
-// ── Single Vendor Banner ──────────────────────────────
+// ── Single Vendor Banner ──────────────────────────────────────────────────────
 @Composable
 private fun SingleVendorBanner(modifier: Modifier = Modifier) {
     Box(

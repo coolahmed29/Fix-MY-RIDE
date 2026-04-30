@@ -2,7 +2,12 @@
 package com.example.fix_my_ride.Navigation
 
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -11,6 +16,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.example.fix_my_ride.Dashboards.Vendor.Presentation.view.VendorDashboardScreen
+import com.example.fix_my_ride.Dashboards.Workshop.Presentation.view.WorkshopDashboardScreen
 import com.example.fix_my_ride.Features.Authentication.Domain.model.AuthResult
 import com.example.fix_my_ride.Features.Detailing.presentation.view.BookingConfirmScreen
 import com.example.fix_my_ride.Features.Detailing.presentation.view.BookingScreen
@@ -33,6 +40,9 @@ import com.example.fix_my_ride.Features.MechanicFinder.Presentation.view.Service
 import com.example.fix_my_ride.Features.MechanicFinder.Presentation.view.LiveTrackingScreen
 import com.example.fix_my_ride.Features.MechanicFinder.Presentation.viewmodel.MechanicFinderViewModel
 import com.example.fix_my_ride.Features.MechanicFinder.domain.model.Mechanic
+import com.example.fix_my_ride.Features.SpareParts.Presentation.view.CheckoutScreen
+import com.example.fix_my_ride.Role_Selection_Screen.RoleSelectionScreen
+import com.example.fix_my_ride.Role_Selection_Screen.UserRole
 
 @Composable
 fun SystemNavigation() {
@@ -40,8 +50,33 @@ fun SystemNavigation() {
 
     NavHost(
         navController    = navController,
-        startDestination = RegistrationScreen
-    ) {
+        startDestination = LoginScreen,
+        enterTransition = {
+            slideInHorizontally(
+                initialOffsetX = { it },
+                animationSpec = tween(350, easing = FastOutSlowInEasing)
+            )
+        },
+        exitTransition = {
+            slideOutHorizontally(
+                targetOffsetX = { it },
+                animationSpec = tween(350, easing = FastOutSlowInEasing)
+            )
+        },
+        popEnterTransition = {
+            slideInHorizontally(
+                initialOffsetX = { it },
+                animationSpec = tween(350, easing = FastOutSlowInEasing)
+            )
+        },
+        popExitTransition = {
+            slideOutHorizontally(
+                targetOffsetX = { it },
+                animationSpec = tween(350, easing = FastOutSlowInEasing)
+            )
+        }
+    )
+    {
 
         // ── Registration ──────────────────────────────
         composable<RegistrationScreen> {
@@ -61,7 +96,7 @@ fun SystemNavigation() {
         composable<LoginScreen> {
             LoginScreen(
                 onLoginSuccess = {
-                    navController.navigate(UserDashboard) {
+                    navController.navigate(RoleSelectionScreen) {  // ✅ UserDashboard ki jagah
                         popUpTo<LoginScreen> { inclusive = true }
                     }
                 },
@@ -71,15 +106,17 @@ fun SystemNavigation() {
                 onBack = { navController.popBackStack() }
             )
         }
-
         // ── Dashboard ─────────────────────────────────
         composable<UserDashboard> {
+
             DashboardScreen(
                 onNavigateToSpareParts = {
                     navController.navigate(SparePartsScreen) {
                         launchSingleTop = true
                         restoreState = true
+
                     }
+
                 },
                 onNavigateToDetailing = {
                     navController.navigate(PackageListScreen) {
@@ -134,10 +171,37 @@ fun SystemNavigation() {
                             )
                         )
                     },
+                    onBuyNow    = { vendor ->                          // ✅ same rakho
+                        viewModel.onVendorSelect(vendor)
+                        navController.navigate(CheckoutScreenRoute)
+                    },
                     viewModel   = viewModel
                 )
             }
         }
+
+        composable<CheckoutScreenRoute> {
+            val sparePartsEntry = remember(it) {
+                navController.getBackStackEntry<SparePartsScreen>()
+            }
+            val viewModel = hiltViewModel<SparePartsViewModel>(sparePartsEntry)
+            val part   = viewModel.selectedPart.collectAsStateWithLifecycle().value
+            val vendor = viewModel.selectedVendor.collectAsStateWithLifecycle().value
+
+            if (part != null && vendor != null) {
+                CheckoutScreen(
+                    part     = part,
+                    vendor   = vendor,
+                    onBack   = { navController.popBackStack() },
+                    onFinish = { navController.navigate(SparePartsScreen) {
+                        popUpTo(SparePartsScreen) { inclusive = false }
+                    }}
+                )
+            }
+        }
+
+
+
 
         // ── Package List ──────────────────────────────
         composable<PackageListScreen> {
@@ -195,10 +259,12 @@ fun SystemNavigation() {
             val bookingState by bookingViewModel.bookingState
                 .collectAsStateWithLifecycle()
 
-            if (bookingState is AuthResult.Success) {
-                bookingViewModel.resetBookingState()
-                navController.navigate(BookingConfirmScreen) {
-                    popUpTo<BookingScreen> { inclusive = true }
+            // ✅ LaunchedEffect — reset nahi, sirf navigate
+            LaunchedEffect(bookingState) {
+                if (bookingState is AuthResult.Success) {
+                    navController.navigate(BookingConfirmScreen) {
+                        popUpTo<BookingScreen> { inclusive = false } // ✅ false — stack mein rakho
+                    }
                 }
             }
 
@@ -206,28 +272,22 @@ fun SystemNavigation() {
                 BookingScreen(
                     pkg           = safePkg,
                     onBack        = { navController.popBackStack() },
-                    onBookingDone = {
-                        navController.navigate(BookingConfirmScreen) {
-                            popUpTo<BookingScreen> { inclusive = true }
-                        }
-                    },
-                    viewModel = bookingViewModel
+                    onBookingDone = { }, // ✅ khali — LaunchedEffect handle kar raha
+                    viewModel     = bookingViewModel
                 )
             }
         }
 
-        // ── Booking Confirm ───────────────────────────
+// ── Booking Confirm ───────────────────────────
         composable<BookingConfirmScreen> {
+            // BookingScreen stack mein hai (inclusive=false tha)
             val bookingEntry = runCatching {
                 navController.getBackStackEntry<BookingScreen>()
             }.getOrNull()
 
             val viewModel: BookingViewModel =
-                if (bookingEntry != null) {
-                    hiltViewModel(bookingEntry)
-                } else {
-                    hiltViewModel()
-                }
+                if (bookingEntry != null) hiltViewModel(bookingEntry)
+                else hiltViewModel()
 
             val bookingState = viewModel.bookingState
                 .collectAsStateWithLifecycle().value
@@ -236,8 +296,9 @@ fun SystemNavigation() {
 
             if (booking != null) {
                 BookingConfirmScreen(
-                    booking = booking,
+                    booking  = booking,
                     onGoHome = {
+                        viewModel.resetBookingState() // ✅ sirf yahan reset karo
                         navController.navigate(UserDashboard) {
                             popUpTo<RegistrationScreen> { inclusive = true }
                         }
@@ -245,6 +306,7 @@ fun SystemNavigation() {
                 )
             }
         }
+
 
         // ── Review ────────────────────────────────────
         composable<ReviewScreen> {
@@ -360,6 +422,32 @@ fun SystemNavigation() {
             }
         }
 
+        composable<WorkshopDashboard> {
+            WorkshopDashboardScreen()
+        }
+
+
+        composable<RoleSelectionScreen> {
+            RoleSelectionScreen(
+                onContinue = { role ->
+                    when (role) {
+                        UserRole.CAR_OWNER      -> navController.navigate(UserDashboard)
+                        UserRole.WORKSHOP_OWNER -> navController.navigate(WorkshopDashboard)
+                        UserRole.VENDOR         -> navController.navigate(VendorDashboard)
+                        UserRole.MECHANIC       -> navController.navigate(MechanicDashboard)
+                    }
+                }
+            )
+        }
+
+        composable<VendorDashboard>
+        {
+            VendorDashboardScreen()
+        }
+
+
+
+
         // ── Live Tracking Screen ──────────────────────
         composable<LiveTrackingScreenRoute> { backStackEntry ->
             val route = backStackEntry.toRoute<LiveTrackingScreenRoute>()
@@ -396,4 +484,6 @@ fun SystemNavigation() {
             )
         }
     }
+
+
 }

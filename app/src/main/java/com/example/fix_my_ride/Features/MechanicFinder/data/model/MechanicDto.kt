@@ -1,65 +1,67 @@
 package com.example.fix_my_ride.Features.MechanicFinder.data.model
 
-
 import com.example.fix_my_ride.Features.MechanicFinder.domain.model.Mechanic
 import com.example.fix_my_ride.Features.MechanicFinder.domain.model.MechanicReview
 import com.google.firebase.firestore.PropertyName
 
 data class MechanicDto(
-    @PropertyName("id")
-    val id: String = "",
+    @get:PropertyName("id") @set:PropertyName("id")
+    var id: String = "",
 
-    @PropertyName("name")
-    val name: String = "",
+    @get:PropertyName("name") @set:PropertyName("name")
+    var name: String = "",
 
-    @PropertyName("phone")
-    val phone: String = "",
+    @get:PropertyName("phone") @set:PropertyName("phone")
+    var phone: String = "",
 
-    @PropertyName("email")
-    val email: String = "",
+    @get:PropertyName("email") @set:PropertyName("email")
+    var email: String = "",
 
-    @PropertyName("rating")
-    val rating: Double = 0.0,
+    @get:PropertyName("rating") @set:PropertyName("rating")
+    var rating: Double = 0.0,
 
-    @PropertyName("experience")
-    val experience: Int = 0,
+    @get:PropertyName("experience") @set:PropertyName("experience")
+    var experience: Int = 0,
 
-    @PropertyName("latitude")
-    val latitude: Double = 0.0,
+    @get:PropertyName("latitude") @set:PropertyName("latitude")
+    var latitude: Double? = null,
 
-    @PropertyName("longitude")
-    val longitude: Double = 0.0,
+    @get:PropertyName("longitude") @set:PropertyName("longitude")
+    var longitude: Double? = null,
 
-    @PropertyName("distance")
-    val distance: Double = 0.0,
+    @get:PropertyName("distance") @set:PropertyName("distance")
+    var distance: Double = 0.0,
 
-    @PropertyName("is_available")
-    val isAvailable: Boolean = true,
+    @get:PropertyName("is_available") @set:PropertyName("is_available")
+    var is_available: Boolean = true,
 
-    @PropertyName("specializations")
-    val specializations: List<String> = emptyList(),
+    @get:PropertyName("specializations") @set:PropertyName("specializations")
+    var specializations: List<String> = emptyList(),
 
-    @PropertyName("average_response_time")
-    val averageResponseTime: Int = 0,
+    @get:PropertyName("average_response_time") @set:PropertyName("average_response_time")
+    var average_response_time: Int = 0,
 
-    @PropertyName("completed_jobs")
-    val completedJobs: Int = 0,
+    @get:PropertyName("completed_jobs") @set:PropertyName("completed_jobs")
+    var completed_jobs: Int = 0,
 
-    @PropertyName("profile_image_url")
-    val profileImageUrl: String? = null,
+    @get:PropertyName("profile_image_url") @set:PropertyName("profile_image_url")
+    var profile_image_url: String? = null,
 
-    @PropertyName("workshop_name")
-    val workshopName: String? = null,
+    @get:PropertyName("workshop_name") @set:PropertyName("workshop_name")
+    var workshop_name: String? = null,
 
-    @PropertyName("workshop_address")
-    val workshopAddress: String? = null,
+    @get:PropertyName("workshop_address") @set:PropertyName("workshop_address")
+    var workshop_address: String? = null,
 
-    @PropertyName("hourly_rate")
-    val hourlyRate: Double = 0.0,
+    @get:PropertyName("hourly_rate") @set:PropertyName("hourly_rate")
+    var hourly_rate: Double = 0.0,
 
-    @PropertyName("reviews")
-    val reviews: List<MechanicReviewDto> = emptyList()
+    @get:PropertyName("reviews") @set:PropertyName("reviews")
+    var reviews: List<MechanicReviewDto> = emptyList()
 ) {
+    // Firestore ke liye no-arg constructor
+    constructor() : this(id = "")
+
     fun toDomainModel(): Mechanic {
         return Mechanic(
             id = id,
@@ -68,46 +70,48 @@ data class MechanicDto(
             email = email,
             rating = rating,
             experience = experience,
-            latitude = latitude,
-            longitude = longitude,
+            latitude = latitude ?: 0.0,
+            longitude = longitude ?: 0.0,
             distance = distance,
-            isAvailable = isAvailable,
+            isAvailable = is_available,
             specializations = specializations,
-            averageResponseTime = averageResponseTime,
-            completedJobs = completedJobs,
-            profileImageUrl = profileImageUrl,
-            workshopName = workshopName,
-            workshopAddress = workshopAddress,
-            hourlyRate = hourlyRate,
+            averageResponseTime = average_response_time,
+            completedJobs = completed_jobs,
+            profileImageUrl = profile_image_url,
+            workshopName = workshop_name,
+            workshopAddress = workshop_address,
+            hourlyRate = hourly_rate,
             reviews = reviews.map { it.toDomainModel() }
         )
     }
 }
 
 data class MechanicReviewDto(
-    @PropertyName("id")
-    val id: String = "",
+    @get:PropertyName("id") @set:PropertyName("id")
+    var id: String = "",
 
-    @PropertyName("user_id")
-    val userId: String = "",
+    @get:PropertyName("user_id") @set:PropertyName("user_id")
+    var user_id: String = "",
 
-    @PropertyName("user_name")
-    val userName: String = "",
+    @get:PropertyName("user_name") @set:PropertyName("user_name")
+    var user_name: String = "",
 
-    @PropertyName("rating")
-    val rating: Double = 0.0,
+    @get:PropertyName("rating") @set:PropertyName("rating")
+    var rating: Double = 0.0,
 
-    @PropertyName("comment")
-    val comment: String = "",
+    @get:PropertyName("comment") @set:PropertyName("comment")
+    var comment: String = "",
 
-    @PropertyName("timestamp")
-    val timestamp: Long = 0L
+    @get:PropertyName("timestamp") @set:PropertyName("timestamp")
+    var timestamp: Long = 0L
 ) {
+    constructor() : this(id = "")
+
     fun toDomainModel(): MechanicReview {
         return MechanicReview(
             id = id,
-            userId = userId,
-            userName = userName,
+            userId = user_id,
+            userName = user_name,
             rating = rating,
             comment = comment,
             timestamp = timestamp

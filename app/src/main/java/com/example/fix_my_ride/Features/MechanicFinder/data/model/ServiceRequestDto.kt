@@ -1,86 +1,87 @@
 package com.example.fix_my_ride.Features.MechanicFinder.data.model
 
-
 import com.example.fix_my_ride.Features.MechanicFinder.domain.model.ServiceRequest
 import com.example.fix_my_ride.Features.MechanicFinder.domain.model.RequestStatus
 import com.example.fix_my_ride.Features.MechanicFinder.domain.model.ServiceType
 import com.google.firebase.firestore.PropertyName
 
 data class ServiceRequestDto(
-    @PropertyName("id")
-    val id: String = "",
+    @get:PropertyName("id") @set:PropertyName("id")
+    var id: String = "",
 
-    @PropertyName("user_id")
-    val userId: String = "",
+    @get:PropertyName("user_id") @set:PropertyName("user_id")
+    var user_id: String = "",
 
-    @PropertyName("mechanic_id")
-    val mechanicId: String = "",
+    @get:PropertyName("mechanic_id") @set:PropertyName("mechanic_id")
+    var mechanic_id: String = "",
 
-    @PropertyName("service_type")
-    val serviceType: String = "",
+    @get:PropertyName("service_type") @set:PropertyName("service_type")
+    var service_type: String = "",
 
-    @PropertyName("status")
-    val status: String = "PENDING",
+    @get:PropertyName("status") @set:PropertyName("status")
+    var status: String = "PENDING",
 
-    @PropertyName("description")
-    val description: String = "",
+    @get:PropertyName("description") @set:PropertyName("description")
+    var description: String = "",
 
-    @PropertyName("latitude")
-    val latitude: Double = 0.0,
+    @get:PropertyName("latitude") @set:PropertyName("latitude")
+    var latitude: Double = 0.0,
 
-    @PropertyName("longitude")
-    val longitude: Double = 0.0,
+    @get:PropertyName("longitude") @set:PropertyName("longitude")
+    var longitude: Double = 0.0,
 
-    @PropertyName("address")
-    val address: String = "",
+    @get:PropertyName("address") @set:PropertyName("address")
+    var address: String = "",
 
-    @PropertyName("car_model")
-    val carModel: String = "",
+    @get:PropertyName("car_model") @set:PropertyName("car_model")
+    var car_model: String = "",
 
-    @PropertyName("requested_time")
-    val requestedTime: Long = 0L,
+    @get:PropertyName("requested_time") @set:PropertyName("requested_time")
+    var requested_time: Long = 0L,
 
-    @PropertyName("estimated_cost")
-    val estimatedCost: Double? = null,
+    @get:PropertyName("estimated_cost") @set:PropertyName("estimated_cost")
+    var estimated_cost: Double? = null,
 
-    @PropertyName("actual_cost")
-    val actualCost: Double? = null,
+    @get:PropertyName("actual_cost") @set:PropertyName("actual_cost")
+    var actual_cost: Double? = null,
 
-    @PropertyName("completed_time")
-    val completedTime: Long? = null,
+    @get:PropertyName("completed_time") @set:PropertyName("completed_time")
+    var completed_time: Long? = null,
 
-    @PropertyName("rating")
-    val rating: Double? = null,
+    @get:PropertyName("rating") @set:PropertyName("rating")
+    var rating: Double? = null,
 
-    @PropertyName("feedback")
-    val feedback: String? = null,
+    @get:PropertyName("feedback") @set:PropertyName("feedback")
+    var feedback: String? = null,
 
-    @PropertyName("images")
-    val images: List<String> = emptyList(),
+    @get:PropertyName("images") @set:PropertyName("images")
+    var images: List<String> = emptyList(),
 
-    @PropertyName("estimated_duration")
-    val estimatedDuration: Int? = null,
+    @get:PropertyName("estimated_duration") @set:PropertyName("estimated_duration")
+    var estimated_duration: Int? = null,
 
-    @PropertyName("mechanic_accepted_time")
-    val mechanicAcceptedTime: Long? = null,
+    @get:PropertyName("mechanic_accepted_time") @set:PropertyName("mechanic_accepted_time")
+    var mechanic_accepted_time: Long? = null,
 
-    @PropertyName("mechanic_arrived_time")
-    val mechanicArrivedTime: Long? = null,
+    @get:PropertyName("mechanic_arrived_time") @set:PropertyName("mechanic_arrived_time")
+    var mechanic_arrived_time: Long? = null,
 
-    @PropertyName("service_start_time")
-    val serviceStartTime: Long? = null,
+    @get:PropertyName("service_start_time") @set:PropertyName("service_start_time")
+    var service_start_time: Long? = null,
 
-    @PropertyName("service_end_time")
-    val serviceEndTime: Long? = null
+    @get:PropertyName("service_end_time") @set:PropertyName("service_end_time")
+    var service_end_time: Long? = null
 ) {
+    constructor() : this(id = "")
+
     fun toDomainModel(): ServiceRequest {
         return ServiceRequest(
             id = id,
-            userId = userId,
-            mechanicId = mechanicId,
-            serviceType = ServiceType.fromString(serviceType),
+            userId = user_id,
+            mechanicId = mechanic_id,
+            serviceType = ServiceType.fromString(service_type),
             status = try {
-                RequestStatus.valueOf(status)
+                RequestStatus.valueOf(status.uppercase())
             } catch (e: Exception) {
                 RequestStatus.PENDING
             },
@@ -88,19 +89,19 @@ data class ServiceRequestDto(
             latitude = latitude,
             longitude = longitude,
             address = address,
-            carModel = carModel,
-            requestedTime = requestedTime,
-            estimatedCost = estimatedCost,
-            actualCost = actualCost,
-            completedTime = completedTime,
+            carModel = car_model,
+            requestedTime = requested_time,
+            estimatedCost = estimated_cost,
+            actualCost = actual_cost,
+            completedTime = completed_time,
             rating = rating,
             feedback = feedback,
             images = images,
-            estimatedDuration = estimatedDuration,
-            mechanicAcceptedTime = mechanicAcceptedTime,
-            mechanicArrivedTime = mechanicArrivedTime,
-            serviceStartTime = serviceStartTime,
-            serviceEndTime = serviceEndTime
+            estimatedDuration = estimated_duration,
+            mechanicAcceptedTime = mechanic_accepted_time,
+            mechanicArrivedTime = mechanic_arrived_time,
+            serviceStartTime = service_start_time,
+            serviceEndTime = service_end_time
         )
     }
 }
@@ -108,26 +109,26 @@ data class ServiceRequestDto(
 fun ServiceRequest.toDto(): ServiceRequestDto {
     return ServiceRequestDto(
         id = id,
-        userId = userId,
-        mechanicId = mechanicId,
-        serviceType = serviceType.name,
+        user_id = userId,
+        mechanic_id = mechanicId,
+        service_type = serviceType.name,
         status = status.name,
         description = description,
         latitude = latitude,
         longitude = longitude,
         address = address,
-        carModel = carModel,
-        requestedTime = requestedTime,
-        estimatedCost = estimatedCost,
-        actualCost = actualCost,
-        completedTime = completedTime,
+        car_model = carModel,
+        requested_time = requestedTime,
+        estimated_cost = estimatedCost,
+        actual_cost = actualCost,
+        completed_time = completedTime,
         rating = rating,
         feedback = feedback,
         images = images,
-        estimatedDuration = estimatedDuration,
-        mechanicAcceptedTime = mechanicAcceptedTime,
-        mechanicArrivedTime = mechanicArrivedTime,
-        serviceStartTime = serviceStartTime,
-        serviceEndTime = serviceEndTime
+        estimated_duration = estimatedDuration,
+        mechanic_accepted_time = mechanicAcceptedTime,
+        mechanic_arrived_time = mechanicArrivedTime,
+        service_start_time = serviceStartTime,
+        service_end_time = serviceEndTime
     )
 }

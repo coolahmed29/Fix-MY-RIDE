@@ -19,6 +19,9 @@ firebaseBom = "33.7.0"
 firebaseFirestore = "26.2.0"
 firebaseDatabase = "22.0.1"
 datastoreCore = "1.2.1"
+firebaseInappmessagingDisplay = "22.0.3"
+animation = "1.11.0"
+foundationLayout = "1.11.0"
 
 [libraries]
 # AndroidX
@@ -53,6 +56,9 @@ firebase-storage = { group = "com.google.firebase", name = "firebase-storage-ktx
 google-firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore", version.ref = "firebaseFirestore" }
 google-firebase-database = { group = "com.google.firebase", name = "firebase-database", version.ref = "firebaseDatabase" }
 androidx-datastore-core = { group = "androidx.datastore", name = "datastore-core", version.ref = "datastoreCore" }
+firebase-inappmessaging-display = { group = "com.google.firebase", name = "firebase-inappmessaging-display", version.ref = "firebaseInappmessagingDisplay" }
+androidx-animation = { group = "androidx.compose.animation", name = "animation", version.ref = "animation" }
+androidx-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayout" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

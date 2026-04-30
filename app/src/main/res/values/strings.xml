@@ -3,42 +3,46 @@
         <string name="app_name">Fix My Ride</string>
 
         <!-- ── Auth ──────────────────────────────────── -->
-        <string name="register_title">Account Banao</string>
-        <string name="register_subtitle">Apni details neeche bharein</string>
-        <string name="login_title">Wapas Aao!</string>
-        <string name="login_subtitle">Apne account mein login karein</string>
-        <!-- ── Fields ────────────────────────────────── -->
-        <string name="label_name">Naam</string>
-        <string name="label_phone">Phone Number</string>
-        <string name="label_email">Email</string>
-        <string name="label_password">Password</string>
-        <string name="placeholder_name">Ali Ahmed</string>
-        <string name="placeholder_phone">03001234567</string>
-        <string name="placeholder_email">ali@email.com</string>
+    <string name="register_title">Create Account</string>
+    <string name="register_subtitle">Fill in your details below</string>
 
-        <!-- ── Buttons ───────────────────────────────── -->
-        <string name="btn_register">Register Karo</string>
-        <string name="btn_login">Login Karo</string>
-        <string name="btn_registering">Register ho raha hai…</string>
-        <string name="btn_logging_in">Login ho raha hai…</string>
+    <string name="login_title">Welcome Back!</string>
+    <string name="login_subtitle">Log in to your account</string>
 
-        <!-- ── Links ─────────────────────────────────── -->
-        <string name="already_have_account">Pehle se account hai?</string>
-        <string name="go_to_login">Login karo</string>
-        <string name="no_account">Account nahi hai?</string>
-        <string name="go_to_register">Register karo</string>
+    <!-- ── Fields ────────────────────────────────── -->
+    <string name="label_name">Full Name</string>
+    <string name="label_phone">Phone Number</string>
+    <string name="label_email">Email Address</string>
+    <string name="label_password">Password</string>
 
-        <!-- ── Password Strength ─────────────────────── -->
-        <string name="password_weak">Password: Kamzor</string>
-        <string name="password_ok">Password: Theek Hai</string>
-        <string name="password_strong">Password: Mazboot</string>
+    <string name="placeholder_name">Ali Ahmed</string>
+    <string name="placeholder_phone">03001234567</string>
+    <string name="placeholder_email">ali@email.com</string>
 
-        <!-- ── Errors ────────────────────────────────── -->
-        <string name="error_name_required">Naam zaroori hai</string>
-        <string name="error_phone_invalid">Phone 11 digits ka hona chahiye</string>
-        <string name="error_email_invalid">Email sahi format mein nahi</string>
-        <string name="error_password_short">Password 6 se kam nahi hona chahiye</string>
-        <string name="error_internet">Internet connection check karein</string>
+    <!-- ── Buttons ───────────────────────────────── -->
+    <string name="btn_register">Sign Up</string>
+    <string name="btn_login">Log In</string>
+    <string name="btn_registering">Creating account…</string>
+    <string name="btn_logging_in">Logging in…</string>
+
+    <!-- ── Links ─────────────────────────────────── -->
+    <string name="already_have_account">Already have an account?</string>
+    <string name="go_to_login">Log in</string>
+
+    <string name="no_account">Don\'t have an account?</string>
+    <string name="go_to_register">Sign up</string>
+
+    <!-- ── Password Strength ─────────────────────── -->
+    <string name="password_weak">Password: Weak</string>
+    <string name="password_ok">Password: Fair</string>
+    <string name="password_strong">Password: Strong</string>
+
+    <!-- ── Errors ────────────────────────────────── -->
+    <string name="error_name_required">Name is required</string>
+    <string name="error_phone_invalid">Phone number must be 11 digits</string>
+    <string name="error_email_invalid">Invalid email format</string>
+    <string name="error_password_short">Password must be at least 6 characters</string>
+    <string name="error_internet">Please check your internet connection</string>
     </resources>
 
 
